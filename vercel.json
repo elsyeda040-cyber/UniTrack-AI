@@ -2,20 +2,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://unit-track-ai.onrender.com/$1"
-    }
-  ]
-}  
-
-{
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/backend/app/main.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "dest": "https://unitrack-ai-production.up.railway.app/$1"
     }
   ]
 }
