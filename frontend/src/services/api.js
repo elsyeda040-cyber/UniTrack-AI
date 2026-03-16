@@ -1,10 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: "https://unitrack-backend-production-6cb0.up.railway.app",
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: "https://unitrack-backend-production-6cb0.up.railway.app"
 });
 
 export const authService = {
