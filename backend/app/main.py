@@ -13,7 +13,7 @@ app = FastAPI(title="UniTrack AI API")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For production, allows frontend from Vercel/Netlify
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
