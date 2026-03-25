@@ -13,8 +13,15 @@ app = FastAPI(title="UniTrack AI API")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[
+        "https://unit-track-ai.vercel.app",
+        "https://unit-tiack-ai.vercel.app",   # اسم بديل محتمل
+        "https://*.vercel.app",               # Vercel preview deployments
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
