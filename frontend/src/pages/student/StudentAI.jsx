@@ -31,11 +31,15 @@ export default function StudentAI() {
   };
 
   const send = async (text) => {
-    const q = text || input.trim();
+    // التقط القيمة الحالية فوراً من الـ ref أو من argument
+    const q = (text ?? input).trim();
     if (!q) return;
+
+    // امسح الـ input وأضف رسالة المستخدم قبل أي async operations
     setInput('');
     setMessages(m => [...m, { id: Date.now(), role: 'user', text: q }]);
     setLoading(true);
+
     await new Promise(r => setTimeout(r, 1200));
     const answer = getAIResponse(q);
     setMessages(m => [...m, { id: Date.now() + 1, role: 'ai', text: answer }]);
