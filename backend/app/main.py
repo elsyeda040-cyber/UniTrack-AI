@@ -25,9 +25,15 @@ async def ai_chat(prompt: schemas.AIPrompt):
     if not os.getenv("GEMINI_API_KEY"):
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured on server")
     try:
+        from datetime import datetime
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        base_instruction = prompt.context if prompt.context else "You are a helpful AI assistant."
+        instruction_with_time = f"{base_instruction}\n\n[معلومة نظامية: الوقت والتاريخ الحالي هو {now}]. إذا سألك المستخدم عن الوقت، أجب بدقة بناءً على هذا الوقت."
+
         model = genai.GenerativeModel(
             model_name='gemini-2.5-flash',
-            system_instruction=prompt.context if prompt.context else None
+            system_instruction=instruction_with_time
         )
         response = model.generate_content(prompt.message)
         return {"response": response.text}
