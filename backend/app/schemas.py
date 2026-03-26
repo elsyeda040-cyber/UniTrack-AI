@@ -87,3 +87,7 @@ class AdminStats(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+class AIPrompt(BaseModel):
+    message: str
+    context: Optional[str] = None

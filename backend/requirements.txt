@@ -6,4 +6,5 @@ python-multipart
 python-jose[cryptography]
 passlib[bcrypt]
 gunicorn
-uvicorn
+python-dotenv
+google-generativeai

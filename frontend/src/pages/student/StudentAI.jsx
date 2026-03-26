@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, Sparkles, Lightbulb, BarChart2, BookOpen, Zap } from 'lucide-react';
+import { aiService } from '../../services/api';
 
 const suggestions = [
   { icon: Lightbulb, text: 'Suggest tasks for my AI Library project', color: 'text-amber-500 bg-amber-50' },
@@ -8,15 +9,10 @@ const suggestions = [
   { icon: Zap, text: 'What are the best practices for system design?', color: 'text-emerald-500 bg-emerald-50' },
 ];
 
-const aiResponses = {
-  default: "Hello! I'm your AI Project Assistant powered by Gemini. I can help you with task suggestions, report writing, progress analysis, and answering project questions. What would you like help with today?",
-  tasks: "Here are suggested tasks for your AI Library System project:\n\n1. **Data Collection** - Gather library catalog datasets\n2. **Algorithm Design** - Design the recommendation engine\n3. **API Integration** - Connect with book databases (Google Books API)\n4. **User Authentication** - Implement secure login\n5. **Testing Suite** - Write unit and integration tests\n\nWould you like me to break down any of these into subtasks?",
-  progress: "📊 **Progress Analysis for Team Alpha:**\n\n• Overall completion: **68%** (on track!)\n• Completed: Research & Analysis, System Design ✅\n• In Progress: UI/UX Prototype, Backend Development 🔄\n• Upcoming: Frontend, Testing\n\n⚠️ **Alert:** Backend Development deadline is approaching in 3 weeks. Consider prioritizing it.\n\n💡 **Recommendation:** Allocate more team members to Backend to avoid delays.",
-};
 
 export default function StudentAI() {
   const [messages, setMessages] = useState([
-    { id: 1, role: 'ai', text: aiResponses.default }
+    { id: 1, role: 'ai', text: "مرحباً! أنا المساعد الذكي لمشروع التخرج الخاص بك والمدعوم من Google Gemini. يمكنني مساعدتك بخطط المشروع، الأكواد، الأبحاث القادمة. كيف يمكنني مساعدتك؟" }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,11 +21,7 @@ export default function StudentAI() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  const getAIResponse = (q) => {
-    if (q.toLowerCase().includes('task') || q.toLowerCase().includes('suggest')) return aiResponses.tasks;
-    if (q.toLowerCase().includes('progress') || q.toLowerCase().includes('analyz')) return aiResponses.progress;
-    return `Great question! Regarding "${q}" — based on best practices for graduation projects, I recommend breaking this into smaller milestones. Start with research and documentation, then move to implementation. Would you like a detailed action plan?`;
-  };
+
 
   const send = async (text) => {
     const domValue = textInputRef.current?.value?.trim() ?? '';
@@ -41,10 +33,16 @@ export default function StudentAI() {
     setMessages(m => [...m, { id: Date.now(), role: 'user', text: q }]);
     setLoading(true);
 
-    await new Promise(r => setTimeout(r, 1200));
-    const answer = getAIResponse(q);
-    setMessages(m => [...m, { id: Date.now() + 1, role: 'ai', text: answer }]);
-    setLoading(false);
+    try {
+      const contextStr = "You are a specialized AI Assistant for university graduation projects. Answer concisely. Act as an expert advisor.";
+      const res = await aiService.chat(q, contextStr);
+      setMessages(m => [...m, { id: Date.now() + 1, role: 'ai', text: res.data.response }]);
+    } catch (err) {
+      console.error(err);
+      setMessages(m => [...m, { id: Date.now() + 1, role: 'ai', text: "عذراً، حدث خطأ أثناء الاتصال بالذكاء الاصطناعي الخادم. يرجى التأكد من أن GEMINI_API_KEY معد بشكل صحيح في الخادم." }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,7 +54,7 @@ export default function StudentAI() {
         </div>
         <div>
           <p className="font-bold text-slate-800 dark:text-white">Gemini AI Assistant</p>
-          <p className="text-xs text-slate-400">Powered by Google Gemini · Project Advisor <span className="italic">(Demo Mode)</span></p>
+          <p className="text-xs text-slate-400">Powered by Google Gemini · Project Advisor</p>
         </div>
         <span className="ml-auto badge badge-purple">AI Active</span>
       </div>

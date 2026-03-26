@@ -38,4 +38,8 @@ export const adminService = {
   getUsers: () => api.get('/admin/users'),
 };
 
+export const aiService = {
+  chat: (message, context = null) => api.post('/ai/chat', { message, context }),
+};
+
 export default api;

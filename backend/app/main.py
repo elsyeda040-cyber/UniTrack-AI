@@ -2,13 +2,35 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+
 from app import models, schemas, database
 from app.database import engine, get_db
+
+load_dotenv()
+api_key = os.getenv("GEMINI_API_KEY")
+if api_key:
+    genai.configure(api_key=api_key)
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="UniTrack AI API")
+
+# Setup AI route
+@app.post("/ai/chat")
+async def ai_chat(prompt: schemas.AIPrompt):
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured on server")
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        full_prompt = f"System Context: {prompt.context}\nUser Instruction: {prompt.message}" if prompt.context else prompt.message
+        response = model.generate_content(full_prompt)
+        return {"response": response.text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Auto-seed database on startup (needed for Railway where SQLite resets on redeploy)
 @app.on_event("startup")
