@@ -22,7 +22,7 @@ function FilePreviewModal({ file, onClose }) {
       a.download = file.name;
       a.click();
     } else {
-      alert('هذا الملف تجريبي ولا يحتوي على محتوى حقيقي للتنزيل.');
+      alert('This is a demo file. Upload a real file to download it.');
     }
   };
 
@@ -48,7 +48,7 @@ function FilePreviewModal({ file, onClose }) {
             onClick={handleDownload}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
           >
-            <Download className="w-3.5 h-3.5" /> تنزيل
+            <Download className="w-3.5 h-3.5" /> Download
           </button>
           <button
             onClick={onClose}
@@ -74,7 +74,7 @@ function FilePreviewModal({ file, onClose }) {
           <div className="bg-white rounded-2xl p-10 text-center max-w-sm w-full shadow-2xl">
             <div className="text-6xl mb-4">📄</div>
             <p className="font-bold text-slate-800 text-lg mb-2">{file.name}</p>
-            <p className="text-slate-500 text-sm mb-6">هذا ملف تجريبي. ارفع ملف PDF حقيقي لتتمكن من عرضه هنا.</p>
+            <p className="text-slate-500 text-sm mb-6">This is a demo file. Upload a real PDF to view it here.</p>
             <div className="bg-slate-50 rounded-xl p-4 text-left space-y-2">
               <div className="h-2 bg-slate-200 rounded w-full" />
               <div className="h-2 bg-slate-200 rounded w-4/5" />
@@ -94,18 +94,18 @@ function FilePreviewModal({ file, onClose }) {
           <div className="bg-white rounded-2xl p-10 text-center max-w-sm w-full shadow-2xl">
             <div className="text-6xl mb-4">📝</div>
             <p className="font-bold text-slate-800 text-lg mb-2">{file.name}</p>
-            <p className="text-slate-500 text-sm mb-4">ملفات Word لا يمكن عرضها في المتصفح مباشرة.</p>
+            <p className="text-slate-500 text-sm mb-4">Word files cannot be previewed directly in the browser.</p>
             <button onClick={handleDownload} className="btn-primary text-sm">
-              <Download className="w-4 h-4 mr-1" /> تنزيل للفتح
+              <Download className="w-4 h-4 mr-1" /> Download to open
             </button>
           </div>
         ) : (
           <div className="bg-white rounded-2xl p-10 text-center max-w-sm w-full shadow-2xl">
             <div className="text-6xl mb-4">{typeIcon[file.type] || typeIcon.default}</div>
             <p className="font-bold text-slate-800 text-lg mb-2">{file.name}</p>
-            <p className="text-slate-500 text-sm mb-4">هذا النوع من الملفات لا يدعم المعاينة المباشرة.</p>
+            <p className="text-slate-500 text-sm mb-4">This file type does not support direct preview.</p>
             <button onClick={handleDownload} className="btn-primary text-sm">
-              <Download className="w-4 h-4 mr-1" /> تنزيل الملف
+              <Download className="w-4 h-4 mr-1" /> Download File
             </button>
           </div>
         )}
@@ -146,7 +146,7 @@ export default function StudentFiles() {
       a.download = file.name;
       a.click();
     } else {
-      alert('هذا الملف تجريبي - ارفع ملف حقيقي لتنزيله.');
+      alert('This is a demo file. Upload a real file to download it.');
     }
   };
 
@@ -164,8 +164,8 @@ export default function StudentFiles() {
         <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3">
           <Upload className="w-7 h-7 text-blue-500" />
         </div>
-        <p className="font-semibold text-slate-700 dark:text-slate-200 mb-1">اسحب الملفات هنا أو اضغط للرفع</p>
-        <p className="text-sm text-slate-400">يدعم PDF, DOC, DOCX, ZIP, PPT, صور حتى 50MB</p>
+        <p className="font-semibold text-slate-700 dark:text-slate-200 mb-1">Drag and drop files here or click to upload</p>
+        <p className="text-sm text-slate-400">Supports PDF, DOC, DOCX, ZIP, PPT, and images up to 50MB</p>
         <label className="mt-4 inline-block btn-primary text-sm cursor-pointer">
           <input
             type="file"
@@ -177,15 +177,15 @@ export default function StudentFiles() {
               e.target.value = '';
             }}
           />
-          اختر ملفات
+          Choose Files
         </label>
       </div>
 
       {/* File List */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-slate-800 dark:text-white">الملفات المرفوعة</h3>
-          <span className="badge badge-blue">{files.length} ملفات</span>
+          <h3 className="font-bold text-slate-800 dark:text-white">Uploaded Files</h3>
+          <span className="badge badge-blue">{files.length} files</span>
         </div>
         <div className="space-y-2">
           {files.map(file => (
@@ -200,28 +200,28 @@ export default function StudentFiles() {
                 <p className="text-xs text-slate-400">{file.task} · {file.size} · {file.date}</p>
               </div>
               <span className={`badge text-xs hidden sm:flex ${file.status === 'approved' ? 'badge-green' : 'badge-yellow'}`}>
-                {file.status === 'approved' ? <><CheckCircle2 className="w-3 h-3 mr-1" /> تم القبول</> : '⏳ قيد المراجعة'}
+                {file.status === 'approved' ? <><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</> : '⏳ Under Review'}
               </span>
               {/* Buttons - always show on mobile, hover on desktop */}
               <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={e => { e.stopPropagation(); setPreviewFile(file); }}
                   className="p-1.5 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-500"
-                  title="معاينة"
+                  title="Preview"
                 >
                   <Eye className="w-4 h-4" />
                 </button>
                 <button
                   onClick={e => handleDownload(e, file)}
                   className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500"
-                  title="تنزيل"
+                  title="Download"
                 >
                   <Download className="w-4 h-4" />
                 </button>
                 <button
                   onClick={e => { e.stopPropagation(); setFiles(f => f.filter(x => x.id !== file.id)); }}
                   className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400"
-                  title="حذف"
+                  title="Delete"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -231,7 +231,7 @@ export default function StudentFiles() {
           {files.length === 0 && (
             <div className="text-center py-10 text-slate-400">
               <File className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p>لا توجد ملفات بعد</p>
+              <p>No files uploaded yet</p>
             </div>
           )}
         </div>

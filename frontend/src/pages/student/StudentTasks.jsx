@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { teamService } from '../../services/api';
-import { CheckCircle2, Clock, Circle, MessageSquare, ChevronDown, ChevronUp, Upload, Loader2 } from 'lucide-react';
+import { CheckCircle2, Clock, Circle, MessageSquare, ChevronDown, ChevronUp, Upload, Loader2, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const statusCols = [
   { key: 'todo', label: 'To Do', color: 'border-slate-300', bg: 'bg-slate-50 dark:bg-slate-700/30', icon: Circle, iconColor: 'text-slate-400' },
   { key: 'in_progress', label: 'In Progress', color: 'border-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/10', icon: Clock, iconColor: 'text-amber-500' },
   { key: 'completed', label: 'Completed', color: 'border-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/10', icon: CheckCircle2, iconColor: 'text-emerald-500' },
+];
+
+const MOCK_TASKS = [
+  { id: 101, title: 'Draft Research Proposal', status: 'completed', description: 'Complete the initial draft of the methodology section', deadline: '2026-03-15', score: 95, feedback: 'Excellent depth of research. Proceed to next phase.' },
+  { id: 102, title: 'System Architecture Design', status: 'in_progress', description: 'Design database schema and component diagrams', deadline: '2026-04-05' },
+  { id: 103, title: 'Frontend UI Implementation', status: 'in_progress', description: 'Build responsive React components following Figma', deadline: '2026-04-10' },
+  { id: 104, title: 'Backend API Integration', status: 'todo', description: 'Connect frontend actions to Node.js backend endpoints', deadline: '2026-04-20' },
+  { id: 105, title: 'User Testing', status: 'todo', description: 'Conduct usability tests with 5 students', deadline: '2026-04-25' },
 ];
 
 function TaskCard({ task }) {
@@ -64,9 +72,14 @@ export default function StudentTasks() {
   const fetchTasks = async () => {
     try {
       const res = await teamService.getTasks(user.teamId);
-      setTasks(res.data);
+      if (res.data && res.data.length > 0) {
+        setTasks(res.data);
+      } else {
+        setTasks(MOCK_TASKS);
+      }
     } catch (err) {
       console.error("Failed to fetch tasks", err);
+      setTasks(MOCK_TASKS);
     } finally {
       setLoading(false);
     }
@@ -80,13 +93,19 @@ export default function StudentTasks() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-white">Task Board</h2>
           <p className="text-sm text-slate-500 mt-0.5">Project Tracking Central</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <span className="badge badge-blue">{tasks.length} Tasks Total</span>
+          <button 
+            onClick={() => alert('New Task modal will open here!')}
+            className="btn-primary text-sm flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" /> Add Task
+          </button>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

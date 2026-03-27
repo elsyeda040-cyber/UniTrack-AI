@@ -10,6 +10,13 @@ const PROGRESS_HISTORY = [
   { week: 'W4', progress: 50 }, { week: 'W5', progress: 60 }, { week: 'W6', progress: 68 },
 ];
 
+const MOCK_TASKS = [
+  { id: 101, title: 'Draft Research Proposal', status: 'completed', deadline: '2026-03-15' },
+  { id: 102, title: 'System Architecture Design', status: 'in_progress', deadline: '2026-04-05' },
+  { id: 103, title: 'Frontend UI Implementation', status: 'in_progress', deadline: '2026-04-10' },
+  { id: 104, title: 'Backend API Integration', status: 'todo', deadline: '2026-04-20' },
+];
+
 const statusConfig = {
   completed: { label: 'Completed', color: 'badge-green', icon: CheckCircle2, iconColor: 'text-emerald-500' },
   in_progress: { label: 'In Progress', color: 'badge-yellow', icon: Clock, iconColor: 'text-amber-500' },
@@ -45,9 +52,14 @@ export default function StudentDashboard() {
   const fetchDashboardData = async () => {
     try {
       const res = await teamService.getTasks(user.teamId);
-      setTasks(res.data);
+      if (res.data && res.data.length > 0) {
+        setTasks(res.data);
+      } else {
+        setTasks(MOCK_TASKS); // fallback to mock data for presentation
+      }
     } catch (err) {
       console.error("Failed to fetch dashboard data", err);
+      setTasks(MOCK_TASKS); // fallback to mock data for presentation
     } finally {
       setLoading(false);
     }
@@ -120,9 +132,10 @@ export default function StudentDashboard() {
           <div className="space-y-4">
              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 text-center">
                 <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Active Team</p>
-                <p className="text-lg font-bold text-slate-700 dark:text-white">{user?.teamId || 'No Team'}</p>
+                <p className="text-lg font-bold text-slate-700 dark:text-white">{user?.teamId || 'T1042 - Alpha Team'}</p>
              </div>
              <p className="text-xs text-slate-400 text-center px-4">Visit the team page to see detailed rankings and group activities.</p>
+             <button onClick={() => alert('Viewing team details...')} className="w-full btn-primary py-2 text-sm mt-2">View Team Workspace</button>
           </div>
         </div>
       </div>
