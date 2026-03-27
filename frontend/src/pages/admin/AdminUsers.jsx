@@ -9,7 +9,7 @@ export default function AdminUsers() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'student', bio: '' });
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'student', teamId: '', createNewTeam: false, newTeamName: '', newTeamProjectTitle: '', bio: '' });
 
   useEffect(() => {
     fetchData();
@@ -35,12 +35,36 @@ export default function AdminUsers() {
     // Simulate API call for adding user
     const newUserObj = {
       id: Date.now(),
-      ...newUser,
-      teamId: null,
+      name: newUser.name,
+      email: newUser.email,
+      password: newUser.password,
+      role: newUser.role,
+      bio: newUser.bio,
+      teamId: newUser.teamId || null,
     };
+    
+    let updatedTeams = [...teams];
+    if (newUser.role === 'student' && newUser.createNewTeam) {
+       const newTeamObj = {
+          id: `T${Date.now()}`,
+          name: newUser.newTeamName,
+          project_title: newUser.newTeamProjectTitle,
+          professor_id: null,
+          progress: 0,
+          students: [newUserObj],
+          emoji: '🚀',
+          color: '#3b82f6'
+       };
+       updatedTeams.push(newTeamObj);
+       newUserObj.teamId = newTeamObj.id;
+    } else if (newUser.role === 'professor' && newUser.teamId) {
+        updatedTeams = updatedTeams.map(t => t.id === newUser.teamId ? { ...t, professor_id: newUserObj.id } : t);
+    }
+
+    setTeams(updatedTeams);
     setUsers([newUserObj, ...users]); // Add to beginning of list
     setIsAddUserModalOpen(false);
-    setNewUser({ name: '', email: '', role: 'student', bio: '' });
+    setNewUser({ name: '', email: '', password: '', role: 'student', teamId: '', createNewTeam: false, newTeamName: '', newTeamProjectTitle: '', bio: '' });
   };
 
   const filteredUsers = users.filter(u => 
@@ -196,10 +220,22 @@ export default function AdminUsers() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
+                <input 
+                  required 
+                  type="password" 
+                  value={newUser.password}
+                  onChange={e => setNewUser({...newUser, password: e.target.value})}
+                  className="input w-full" 
+                  placeholder="Enter temporary password"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
                 <select 
                   value={newUser.role}
-                  onChange={e => setNewUser({...newUser, role: e.target.value})}
+                  onChange={e => setNewUser({...newUser, role: e.target.value, teamId: '', createNewTeam: false})}
                   className="input w-full"
                 >
                   <option value="student">Student</option>
@@ -207,17 +243,82 @@ export default function AdminUsers() {
                 </select>
               </div>
 
-              {newUser.role === 'student' && (
+              {newUser.role === 'professor' && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bio (Optional)</label>
-                  <textarea 
-                    value={newUser.bio}
-                    onChange={e => setNewUser({...newUser, bio: e.target.value})}
-                    className="input w-full resize-none" 
-                    rows="2"
-                    placeholder="Short bio..."
-                  ></textarea>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Supervise Team (Optional)</label>
+                  <select 
+                    value={newUser.teamId}
+                    onChange={e => setNewUser({...newUser, teamId: e.target.value})}
+                    className="input w-full"
+                  >
+                    <option value="">No Team Assigned</option>
+                    {teams.map(t => <option key={t.id} value={t.id}>{t.name} ({t.project_title})</option>)}
+                  </select>
                 </div>
+              )}
+
+              {newUser.role === 'student' && (
+                <>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Team Assignment</label>
+                      <label className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={newUser.createNewTeam}
+                          onChange={e => setNewUser({...newUser, createNewTeam: e.target.checked, teamId: ''})}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        Create New Team
+                      </label>
+                    </div>
+
+                    {!newUser.createNewTeam ? (
+                      <select 
+                        value={newUser.teamId}
+                        onChange={e => setNewUser({...newUser, teamId: e.target.value})}
+                        className="input w-full"
+                      >
+                        <option value="">No Team Assigned</option>
+                        {teams.map(t => <option key={t.id} value={t.id}>{t.name} ({t.project_title})</option>)}
+                      </select>
+                    ) : (
+                      <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-100 dark:border-slate-700">
+                        <div>
+                          <input 
+                            required={newUser.createNewTeam}
+                            type="text" 
+                            value={newUser.newTeamName}
+                            onChange={e => setNewUser({...newUser, newTeamName: e.target.value})}
+                            className="input w-full text-sm py-1.5" 
+                            placeholder="New Team Name (e.g. AI Visionaries)"
+                          />
+                        </div>
+                        <div>
+                          <input 
+                            required={newUser.createNewTeam}
+                            type="text" 
+                            value={newUser.newTeamProjectTitle}
+                            onChange={e => setNewUser({...newUser, newTeamProjectTitle: e.target.value})}
+                            className="input w-full text-sm py-1.5" 
+                            placeholder="Project Title"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bio (Optional)</label>
+                    <textarea 
+                      value={newUser.bio}
+                      onChange={e => setNewUser({...newUser, bio: e.target.value})}
+                      className="input w-full resize-none" 
+                      rows="2"
+                      placeholder="Short bio..."
+                    ></textarea>
+                  </div>
+                </>
               )}
 
               <div className="flex justify-end gap-3 mt-6">
