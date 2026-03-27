@@ -13,8 +13,8 @@ const roles = [
 export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState('student');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('ahmed@university.edu');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,7 +23,6 @@ export default function LoginPage() {
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role.key);
-    setEmail(role.defaultEmail);
     setError('');
   };
 
