@@ -46,7 +46,7 @@ export default function AdminUsers() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-800 dark:text-white">User Management</h2>
-        <button className="btn-primary text-sm"><Plus className="w-4 h-4" /> Add User</button>
+        <button onClick={() => alert('تم تفعيل نموذج إضافة مستخدم جديد!')} className="btn-primary text-sm"><Plus className="w-4 h-4" /> Add User</button>
       </div>
 
       {/* Tabs */}
@@ -88,7 +88,7 @@ export default function AdminUsers() {
                       {teams.filter(t => t.professor_id === p.id).length}
                     </td>
                     <td className="py-3 font-bold text-amber-500">4.8 ⭐</td>
-                    <td className="py-3"><button className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
+                    <td className="py-3"><button onClick={() => alert('تم إرسال طلب حذف المستخدم للمراجعة')} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
                   </tr>
                 ))}
               </tbody>
