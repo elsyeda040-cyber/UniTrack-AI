@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { adminService, teamService } from '../../services/api';
-import { Plus, Search, Trash2, Mail, Users, BookOpen, GraduationCap, Loader2 } from 'lucide-react';
+import { Plus, Search, Trash2, Mail, Users, BookOpen, GraduationCap, Loader2, X } from 'lucide-react';
 
 export default function AdminUsers() {
   const [tab, setTab] = useState('professors');
@@ -8,6 +8,8 @@ export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'student', bio: '' });
 
   useEffect(() => {
     fetchData();
@@ -28,6 +30,19 @@ export default function AdminUsers() {
     }
   };
 
+  const handleAddUser = (e) => {
+    e.preventDefault();
+    // Simulate API call for adding user
+    const newUserObj = {
+      id: Date.now(),
+      ...newUser,
+      teamId: null,
+    };
+    setUsers([newUserObj, ...users]); // Add to beginning of list
+    setIsAddUserModalOpen(false);
+    setNewUser({ name: '', email: '', role: 'student', bio: '' });
+  };
+
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(search.toLowerCase()) || 
     u.email.toLowerCase().includes(search.toLowerCase())
@@ -46,7 +61,7 @@ export default function AdminUsers() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-800 dark:text-white">User Management</h2>
-        <button onClick={() => alert('تم تفعيل نموذج إضافة مستخدم جديد!')} className="btn-primary text-sm"><Plus className="w-4 h-4" /> Add User</button>
+        <button onClick={() => setIsAddUserModalOpen(true)} className="btn-primary text-sm"><Plus className="w-4 h-4" /> Add User</button>
       </div>
 
       {/* Tabs */}
@@ -138,6 +153,90 @@ export default function AdminUsers() {
               <p className="text-xs text-slate-400">{team.progress}% complete · {team.students?.length || 0} students</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {isAddUserModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">Add New User</h3>
+              <button 
+                onClick={() => setIsAddUserModalOpen(false)} 
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddUser} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+                <input 
+                  required 
+                  type="text" 
+                  value={newUser.name}
+                  onChange={e => setNewUser({...newUser, name: e.target.value})}
+                  className="input w-full" 
+                  placeholder="Enter full name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                <input 
+                  required 
+                  type="email" 
+                  value={newUser.email}
+                  onChange={e => setNewUser({...newUser, email: e.target.value})}
+                  className="input w-full" 
+                  placeholder="name@university.edu"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
+                <select 
+                  value={newUser.role}
+                  onChange={e => setNewUser({...newUser, role: e.target.value})}
+                  className="input w-full"
+                >
+                  <option value="student">Student</option>
+                  <option value="professor">Professor</option>
+                </select>
+              </div>
+
+              {newUser.role === 'student' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bio (Optional)</label>
+                  <textarea 
+                    value={newUser.bio}
+                    onChange={e => setNewUser({...newUser, bio: e.target.value})}
+                    className="input w-full resize-none" 
+                    rows="2"
+                    placeholder="Short bio..."
+                  ></textarea>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => setIsAddUserModalOpen(false)}
+                  className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary px-6"
+                >
+                  Save User
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
