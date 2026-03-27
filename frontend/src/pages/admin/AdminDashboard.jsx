@@ -1,33 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { adminService, teamService } from '../../services/api';
-import { Star, Users, ChevronRight, BarChart2, Settings, Shield, Loader2 } from 'lucide-react';
-
-const colorByIdx = ['from-blue-500 to-blue-600', 'from-purple-500 to-purple-600', 'from-emerald-500 to-emerald-600', 'from-orange-500 to-orange-600'];
+import { Shield, Loader2, Star, CheckCircle, Clock } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [teams, setTeams] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAdminData();
+    const fetchData = async () => {
+      try {
+        const [statsRes, teamsRes, usersRes] = await Promise.all([
+          adminService.getStats(),
+          teamService.getAll(),
+          adminService.getUsers()
+        ]);
+        setStats(statsRes.data);
+        setTeams(teamsRes.data);
+        setUsers(usersRes.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
-
-  const fetchAdminData = async () => {
-    try {
-      const [statsRes, teamsRes] = await Promise.all([
-        adminService.getStats(),
-        teamService.getAll()
-      ]);
-      setStats(statsRes.data);
-      setTeams(teamsRes.data);
-    } catch (err) {
-      console.error("Failed to fetch admin data", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) return (
     <div className="h-64 flex items-center justify-center">
@@ -35,73 +34,105 @@ export default function AdminDashboard() {
     </div>
   );
 
+  // Derive top teams for the 3 visual cards
+  const topTeams = teams.slice(0, 3);
+  const colorByIdx = ['from-blue-500 to-indigo-600', 'from-slate-700 to-slate-900', 'from-orange-400 to-orange-500'];
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Banner */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 text-white flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold mb-1 flex items-center gap-2"><Shield className="w-6 h-6" /> Admin Dashboard</h2>
-          <p className="text-orange-200">Full system overview — {stats?.total_teams} teams, {stats?.total_users} users</p>
-        </div>
-        <div className="hidden md:block text-right">
-          <p className="text-4xl font-bold">{stats?.total_users}</p>
-          <p className="text-orange-200 text-sm">Total Active Users</p>
+    <div className="space-y-6 animate-fade-in pb-8 rtl" dir="rtl">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          مساحة الإدارة
+        </h2>
+        <div className="text-sm text-slate-500 bg-white dark:bg-slate-800 px-4 py-2 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm">
+          مساحة الإدارة / الرئيسية
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Users', value: stats?.total_users, color: 'text-blue-600' },
-          { label: 'Total Teams', value: stats?.total_teams, color: 'text-purple-600' },
-          { label: 'Total Tasks', value: stats?.total_tasks, color: 'text-emerald-600' },
-          { label: 'Avg Progress', value: `${Math.round(stats?.avg_progress || 0)}%`, color: 'text-amber-600' },
-        ].map(s => (
-          <div key={s.label} className={`card text-center`}>
-            <div className={`text-2xl font-bold ${s.color} dark:text-white`}>{s.value}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{s.label}</div>
+      {/* Top Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {topTeams.map((team, idx) => (
+          <div key={team.id} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden group hover:shadow-md transition-all">
+            <div className={`h-24 bg-gradient-to-r ${colorByIdx[idx % 3]} relative`}>
+               <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-lg p-1.5 text-white">
+                 <Shield className="w-5 h-5" />
+               </div>
+            </div>
+            <div className="p-5 pt-0 relative">
+              <div className="w-16 h-16 rounded-xl border-4 border-white dark:border-slate-800 bg-slate-100 -mt-8 mb-3 overflow-hidden shadow-sm">
+                 <img src={`https://ui-avatars.com/api/?name=${team.name}&background=random`} alt={team.name} className="w-full h-full object-cover" />
+              </div>
+              <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-1">{team.project_title}</h3>
+              <p className="text-sm text-slate-500 mb-3 font-medium">{team.name}</p>
+              
+              {/* Stars */}
+              <div className="flex gap-1 text-yellow-400 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={`w-4 h-4 ${i < Math.floor(team.progress/20) ? 'fill-current' : 'fill-transparent border-yellow-400'}`} strokeWidth={i >= Math.floor(team.progress/20) ? 2 : 0} />
+                ))}
+              </div>
+
+              <div className="flex justify-between items-center text-xs text-slate-500 mb-1.5">
+                 <span className="font-semibold">نسبة الإنجاز</span>
+                 <span className="font-bold text-slate-700 dark:text-slate-300">{team.progress}%</span>
+              </div>
+              <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                 <div className="h-full bg-blue-500 rounded-full" style={{width: `${team.progress}%`}} />
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Professors Overview */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-slate-800 dark:text-white">Active Supervisors</h3>
-          <Link to="/admin/users" className="text-blue-600 hover:underline text-xs">View all users</Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-           {/* We can fetch users later if needed, for now showing a summary from stats */}
-           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 text-center">
-              <p className="text-2xl font-bold text-slate-800 dark:text-white">{stats?.total_users}</p>
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">Total Users</p>
-           </div>
-           <p className="col-span-full text-center text-xs text-slate-400 mt-2">All system members are managed through the Users module.</p>
-        </div>
-      </div>
+      {/* List Section */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
+         <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-lg text-slate-800 dark:text-white">Admin Dashboard</h3>
+            <button className="text-sm text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg font-medium hover:bg-blue-100 transition-colors">عرض كل الفرق</button>
+         </div>
+         
+         <div className="space-y-4">
+           {teams.map(team => {
+             const statusColor = team.progress === 100 ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 
+                               team.progress >= 50 ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-orange-600 bg-orange-50 border-orange-200';
+             const statusText = team.progress === 100 ? 'مكتمل' : team.progress >= 50 ? 'قيد التطوير' : 'في الانتظار';
+             return (
+               <div key={team.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors gap-4">
+                 
+                 {/* Identity Info */}
+                 <div className="flex items-center gap-4 min-w-[250px]">
+                   <img src={`https://ui-avatars.com/api/?name=${team.name}&background=random`} alt={team.name} className="w-12 h-12 rounded-xl object-cover shadow-sm" />
+                   <div>
+                     <h4 className="font-bold text-slate-800 dark:text-white text-sm">{team.name}</h4>
+                     <p className="text-xs text-slate-500 mt-0.5">{team.project_title}</p>
+                     <div className="flex gap-0.5 text-yellow-400 mt-1.5">
+                        {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < Math.floor(team.progress/20) ? 'fill-current' : 'fill-transparent text-slate-300'}`} strokeWidth={i >= Math.floor(team.progress/20) ? 2 : 0} />)}
+                     </div>
+                   </div>
+                 </div>
 
-      {/* Teams Overview */}
-      <div className="card">
-        <h3 className="font-bold text-slate-800 dark:text-white mb-4">All Teams Overview</h3>
-        <div className="space-y-3">
-          {teams.map(team => (
-            <div key={team.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-              <div className="text-2xl flex-shrink-0">{team.emoji}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="font-semibold text-slate-700 dark:text-slate-200 text-sm">{team.name} — {team.project_title}</p>
-                  <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{team.progress}%</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${team.progress}%`, background: team.color }} />
-                </div>
-              </div>
-              <span className={`badge text-xs hidden sm:flex ${team.progress >= 70 ? 'badge-green' : team.progress >= 50 ? 'badge-yellow' : 'badge-red'}`}>
-                {team.progress >= 70 ? 'On Track' : team.progress >= 50 ? 'Moderate' : 'Needs Help'}
-              </span>
-            </div>
-          ))}
-        </div>
+                 {/* Progress Bar */}
+                 <div className="flex-1 w-full max-w-sm px-4">
+                   <div className="flex justify-between text-xs mb-1.5">
+                     <span className="text-slate-500 font-medium">التقدم</span>
+                     <span className="font-bold text-slate-700 dark:text-slate-200">{team.progress}%</span>
+                   </div>
+                   <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{width: `${team.progress}%`}} />
+                   </div>
+                 </div>
+
+                 {/* Status Badge */}
+                 <div className="w-32 flex justify-end">
+                   <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center justify-center gap-1.5 w-full ${statusColor}`}>
+                     {team.progress === 100 ? <CheckCircle className="w-3.5 h-3.5"/> : <Clock className="w-3.5 h-3.5"/>}
+                     {statusText}
+                   </span>
+                 </div>
+               </div>
+             )
+           })}
+         </div>
       </div>
     </div>
   );
