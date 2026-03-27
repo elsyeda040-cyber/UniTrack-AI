@@ -7,6 +7,7 @@ export default function AdminDashboard() {
   const [teams, setTeams] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProfessor, setSelectedProfessor] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,9 +35,12 @@ export default function AdminDashboard() {
     </div>
   );
 
-  // Derive top teams for the 3 visual cards
-  const topTeams = teams.slice(0, 3);
+  // Derive professors for the top visual cards
+  const professors = users.filter(u => u.role === 'professor').slice(0, 3);
   const colorByIdx = ['from-blue-500 to-indigo-600', 'from-slate-700 to-slate-900', 'from-orange-400 to-orange-500'];
+
+  // Filter teams based on selected professor
+  const displayedTeams = selectedProfessor ? teams.filter(t => t.professor_id === selectedProfessor.id) : teams;
 
   return (
     <div className="space-y-6 animate-fade-in pb-8 rtl" dir="rtl">
@@ -49,47 +53,55 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Top Cards */}
+      {/* Top Cards (Professors) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {topTeams.map((team, idx) => (
-          <div key={team.id} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden group hover:shadow-md transition-all">
-            <div className={`h-24 bg-gradient-to-r ${colorByIdx[idx % 3]} relative`}>
-               <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-lg p-1.5 text-white">
-                 <Shield className="w-5 h-5" />
-               </div>
-            </div>
-            <div className="p-5 pt-0 relative">
-              <div className="w-16 h-16 rounded-xl border-4 border-white dark:border-slate-800 bg-slate-100 -mt-8 mb-3 overflow-hidden shadow-sm">
-                 <img src={`https://ui-avatars.com/api/?name=${team.name}&background=random`} alt={team.name} className="w-full h-full object-cover" />
+        {professors.map((prof, idx) => {
+          const isSelected = selectedProfessor?.id === prof.id;
+          return (
+            <div 
+              key={prof.id} 
+              onClick={() => setSelectedProfessor(isSelected ? null : prof)}
+              className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm border ${isSelected ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-50' : 'border-slate-100 dark:border-slate-700'} overflow-hidden group hover:shadow-md transition-all cursor-pointer`}
+            >
+              <div className={`h-24 bg-gradient-to-r ${colorByIdx[idx % 3]} relative`}>
+                 <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-lg p-1.5 text-white">
+                   <Shield className="w-5 h-5" />
+                 </div>
               </div>
-              <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-1">{team.project_title}</h3>
-              <p className="text-sm text-slate-500 mb-3 font-medium">{team.name}</p>
-              
-              {/* Stars */}
-              <div className="flex gap-1 text-yellow-400 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`w-4 h-4 ${i < Math.floor(team.progress/20) ? 'fill-current' : 'fill-transparent border-yellow-400'}`} strokeWidth={i >= Math.floor(team.progress/20) ? 2 : 0} />
-                ))}
-              </div>
+              <div className="p-5 pt-0 relative">
+                <div className="w-16 h-16 rounded-xl border-4 border-white dark:border-slate-800 bg-slate-100 -mt-8 mb-3 overflow-hidden shadow-sm">
+                   <img src={`https://ui-avatars.com/api/?name=${prof.name}&background=random`} alt={prof.name} className="w-full h-full object-cover" />
+                </div>
+                <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-1">{prof.name}</h3>
+                <p className="text-sm text-slate-500 mb-3 font-medium capitalize">عضو هيئة تدريس / مشرف</p>
+                
+                {/* Stars to mock ratings as per ui */}
+                <div className="flex gap-1 text-yellow-400 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`w-4 h-4 ${i < (4+Math.random()) ? 'fill-current' : 'fill-transparent border-yellow-400'}`} strokeWidth={i >= 4 ? 2 : 0} />
+                  ))}
+                </div>
 
-              <div className="flex justify-between items-center text-xs text-slate-500 mb-1.5">
-                 <span className="font-semibold">نسبة الإنجاز</span>
-                 <span className="font-bold text-slate-700 dark:text-slate-300">{team.progress}%</span>
-              </div>
-              <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                 <div className="h-full bg-blue-500 rounded-full" style={{width: `${team.progress}%`}} />
+                <div className="flex justify-between items-center text-xs text-slate-500 mb-1.5">
+                   <span className="font-semibold">الفرق المشرف عليها</span>
+                   <span className="font-bold text-slate-700 dark:text-slate-300">
+                     {teams.filter(t => t.professor_id === prof.id).length} فرق
+                   </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
      {/* List Section */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 mt-8">
          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-lg text-slate-800 dark:text-white">Admin Dashboard</h3>
+            <h3 className="font-bold text-lg text-slate-800 dark:text-white">
+              {selectedProfessor ? `الفرق الخاصة بـ ${selectedProfessor.name}` : 'جميع الفرق المسجلة'}
+            </h3>
             <button 
-              onClick={() => alert('جاري تحويلك لعرض جميع تفاصيل الفرق')}
+              onClick={() => setSelectedProfessor(null)}
               className="text-sm text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg font-medium hover:bg-blue-100 transition-colors"
             >
               عرض كل الفرق
@@ -97,7 +109,9 @@ export default function AdminDashboard() {
          </div>
          
          <div className="space-y-4">
-           {teams.map(team => {
+           {displayedTeams.length === 0 ? (
+              <p className="text-center text-slate-500 py-8">لا يوجد فرق مخصصة حالياً.</p>
+           ) : displayedTeams.map(team => {
              const statusColor = team.progress === 100 ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 
                                team.progress >= 50 ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-orange-600 bg-orange-50 border-orange-200';
              const statusText = team.progress === 100 ? 'مكتمل' : team.progress >= 50 ? 'قيد التطوير' : 'في الانتظار';
