@@ -380,6 +380,7 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
                   </div>
                 )}
 
+                {editingMsgId === msg.id ? (
                   <div className="flex flex-col gap-2 min-w-[150px]">
                     <textarea 
                       value={editValue || ""}
