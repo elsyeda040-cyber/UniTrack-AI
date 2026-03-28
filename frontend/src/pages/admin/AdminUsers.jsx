@@ -109,8 +109,20 @@ export default function AdminUsers() {
       fetchData();
       setIsEditTeamModalOpen(false);
     } catch (err) {
-      console.error("Failed to update user team", err);
       alert("Failed to update team assignment.");
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+    try {
+      await adminService.deleteUser(userId);
+      setUsers(users.filter(u => u.id !== userId));
+      // If professor, also refresh teams to show unassigned
+      if (tab === 'professors') fetchData();
+    } catch (err) {
+      console.error("Failed to delete user", err);
+      alert("Failed to delete user. Please try again.");
     }
   };
 
@@ -184,7 +196,7 @@ export default function AdminUsers() {
                     <td className="py-3">
                       <div className="flex items-center gap-1">
                         <button onClick={() => { setEditingUser(p); setNewTeamId(p.teamId || ''); setIsEditTeamModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">Move</button>
-                        <button onClick={() => alert('تم إرسال طلب حذف المستخدم للمراجعة')} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleDeleteUser(p.id)} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -216,7 +228,10 @@ export default function AdminUsers() {
                     <td className="py-3 text-slate-400 text-xs">{s.teamId || 'No Team'}</td>
                     <td className="py-3 text-slate-400 truncate max-w-[150px]">{s.bio}</td>
                     <td className="py-3">
-                      <button onClick={() => { setEditingUser(s); setNewTeamId(s.teamId || ''); setIsEditTeamModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">Change Team</button>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => { setEditingUser(s); setNewTeamId(s.teamId || ''); setIsEditTeamModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">Change Team</button>
+                        <button onClick={() => handleDeleteUser(s.id)} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                      </div>
                     </td>
                   </tr>
                 ))}

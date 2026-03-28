@@ -43,6 +43,7 @@ export const adminService = {
   createUser: (data) => api.post('/admin/users', data),
   createTeam: (data) => api.post('/admin/teams', data),
   updateUserTeam: (userId, teamId) => api.put(`/admin/users/${userId}/team`, { team_id: teamId }),
+  deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
 };
 
 export const aiService = {

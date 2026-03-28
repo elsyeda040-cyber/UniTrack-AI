@@ -498,3 +498,28 @@ def update_user_team(user_id: str, data: schemas.UserUpdateTeam, db: Session = D
         "bio": user.bio,
         "teamId": data.team_id
     }
+@app.delete("/admin/users/{user_id}")
+def delete_user(user_id: str, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # 1. Handle team relationships
+    if user.role == 'student':
+        user.teams_as_student = []
+    elif user.role == 'professor':
+        prof_teams = db.query(models.Team).filter(models.Team.professor_id == user_id).all()
+        for t in prof_teams:
+            t.professor_id = None
+    elif user.role == 'assistant':
+        ta_teams = db.query(models.Team).filter(models.Team.assistant_id == user_id).all()
+        for t in ta_teams:
+            t.assistant_id = None
+            
+    # 2. Delete notifications
+    db.query(models.Notification).filter(models.Notification.user_id == user_id).delete()
+    
+    # 3. Delete the user
+    db.delete(user)
+    db.commit()
+    return {"status": "success", "message": f"User {user_id} deleted successfully"}

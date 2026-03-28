@@ -40,6 +40,10 @@ export const AppProvider = ({ children }) => {
       }
     } catch (err) {
       console.error("Profile sync failed", err);
+      if (err.response?.status === 404) {
+        console.log("User no longer exists. Logging out...");
+        logout();
+      }
     }
   };
 
