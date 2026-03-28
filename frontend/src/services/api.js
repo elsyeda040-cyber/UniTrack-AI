@@ -15,6 +15,7 @@ export const userService = {
   getProfile: (userId) => api.get(`/users/${userId}`),
   updateProfile: (userId, data) => api.put(`/users/${userId}`, data),
   getNotifications: (userId) => api.get(`/users/${userId}/notifications`),
+  clearChatNotifications: (userId) => api.post(`/users/${userId}/notifications/clear-chat`),
 };
 
 export const teamService = {

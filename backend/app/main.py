@@ -229,11 +229,46 @@ def get_messages(team_id: str, db: Session = Depends(get_db)):
 def create_message(team_id: str, msg: schemas.MessageBase, db: Session = Depends(get_db)):
     new_msg = models.Message(**msg.dict())
     new_msg.team_id = team_id
-    new_msg.is_own = True # Normally determined by session, defaulting for demo
+    new_msg.is_own = True 
     db.add(new_msg)
+    
+    # Create notifications for team members
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+    if team:
+        # Collect all potential recipients
+        recipients = [s.id for s in team.students]
+        if team.professor_id: recipients.append(team.professor_id)
+        if team.assistant_id: recipients.append(team.assistant_id)
+        
+        # Filter out sender and duplicates
+        recipients = list(set([r for r in recipients if r != msg.sender_id]))
+        
+        sender = db.query(models.User).filter(models.User.id == msg.sender_id).first()
+        sender_name = sender.name if sender else "Member"
+        
+        for r_id in recipients:
+            notif = models.Notification(
+                user_id=r_id,
+                type="chat",
+                title=f"New Message from {sender_name}",
+                message=msg.text[:50] + "..." if msg.text and len(msg.text) > 50 else (msg.text or "Sent a file/image"),
+                time=datetime.now().isoformat(),
+                read=False
+            )
+            db.add(notif)
+
     db.commit()
     db.refresh(new_msg)
     return new_msg
+
+@app.post("/users/{user_id}/notifications/clear-chat")
+def clear_chat_notifications(user_id: str, db: Session = Depends(get_db)):
+    db.query(models.Notification).filter(
+        models.Notification.user_id == user_id,
+        models.Notification.type == "chat"
+    ).update({"read": True})
+    db.commit()
+    return {"status": "success"}
 
 # Team Endpoints
 @app.get("/teams", response_model=List[schemas.TeamResponse])

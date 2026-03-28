@@ -12,6 +12,7 @@ export const AppProvider = ({ children }) => {
     return localStorage.getItem('unitrack_dark') === 'true';
   });
   const [notifications, setNotifications] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -50,9 +51,21 @@ export const AppProvider = ({ children }) => {
   const fetchNotifications = async () => {
     try {
       const res = await userService.getNotifications(user.id);
-      setNotifications(res.data.filter(n => !n.read).length);
+      const allNotifs = res.data;
+      setNotifications(allNotifs.filter(n => !n.read).length);
+      setUnreadChatCount(allNotifs.filter(n => n.type === 'chat' && !n.read).length);
     } catch (err) {
       console.error("Failed to fetch notifications", err);
+    }
+  };
+
+  const clearChatBadge = async () => {
+    if (!user) return;
+    try {
+      await userService.clearChatNotifications(user.id);
+      fetchNotifications();
+    } catch (err) {
+      console.error("Failed to clear chat notifications", err);
     }
   };
 
@@ -89,7 +102,8 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{ 
       user, login, logout, darkMode, toggleDark, 
-      notifications, setNotifications, updateUser, loading 
+      notifications, setNotifications, unreadChatCount, clearChatBadge,
+      updateUser, loading 
     }}>
       {children}
     </AppContext.Provider>

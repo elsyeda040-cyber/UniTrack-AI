@@ -43,7 +43,7 @@ const navByRole = { student: studentNav, professor: professorNav, assistant: ass
 const colorByRole = { student: 'from-blue-600 to-blue-700', professor: 'from-purple-600 to-purple-700', assistant: 'from-emerald-600 to-emerald-700', admin: 'from-orange-600 to-orange-700' };
 
 export default function Sidebar() {
-  const { user, logout, darkMode, toggleDark, notifications } = useApp();
+  const { user, logout, darkMode, toggleDark, notifications, unreadChatCount } = useApp();
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
 
@@ -95,6 +95,11 @@ export default function Sidebar() {
               {label === 'Notifications' && notifications > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">
                   {notifications}
+                </span>
+              )}
+              {label === 'Chat' && unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold animate-pulse">
+                  {unreadChatCount}
                 </span>
               )}
             </div>

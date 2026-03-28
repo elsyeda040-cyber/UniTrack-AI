@@ -6,13 +6,17 @@ import { Send, Paperclip, Mic, Trash2, Play, FileText, Download, Loader2 } from 
 const roleColor = { professor: 'from-purple-500 to-purple-600', assistant: 'from-emerald-500 to-emerald-600', student: 'from-blue-500 to-blue-600' };
 
 export default function StudentChat({ teamId: propTeamId, teamName: propTeamName }) {
-  const { user } = useApp();
+  const { user, clearChatBadge } = useApp();
   const activeTeamId = propTeamId || user?.teamId;
   const activeTeamName = propTeamName || 'Workspace Chat';
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    clearChatBadge();
+  }, []);
   const fileInputRef = useRef(null);
   const textInputRef = useRef(null); // قراءة مباشرة من DOM لتجنب مشاكل IME على الموبايل
 
