@@ -37,6 +37,7 @@ export const adminService = {
   getStats: () => api.get('/admin/stats'),
   getUsers: () => api.get('/admin/users'),
   createUser: (data) => api.post('/admin/users', data),
+  createTeam: (data) => api.post('/admin/teams', data),
 };
 
 export const aiService = {

@@ -303,6 +303,23 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         "teamId": team_id_res
     }
 
+@app.post("/admin/teams", response_model=schemas.TeamResponse)
+def create_team(team: schemas.TeamCreate, db: Session = Depends(get_db)):
+    import uuid
+    team_id = f"T-{str(uuid.uuid4())[:6].upper()}"
+    new_team = models.Team(
+        id=team_id,
+        name=team.name,
+        project_title=team.project_title,
+        color=team.color,
+        emoji=team.emoji,
+        progress=0
+    )
+    db.add(new_team)
+    db.commit()
+    db.refresh(new_team)
+    return new_team
+
 @app.get("/admin/users", response_model=List[schemas.UserResponse])
 def get_all_users(db: Session = Depends(get_db)):
     users = db.query(models.User).all()

@@ -42,13 +42,19 @@ class TeamBase(BaseModel):
     progress: int = 0
     color: str
     emoji: str
-    professor_id: str
-    assistant_id: str
+    professor_id: Optional[str] = None
+    assistant_id: Optional[str] = None
+
+class TeamCreate(BaseModel):
+    name: str
+    project_title: str
+    color: str = "#3b82f6"
+    emoji: str = "🚀"
 
 class TeamResponse(TeamBase):
-    professor: UserResponse
-    assistant: UserResponse
-    students: List[UserResponse]
+    professor: Optional[UserResponse] = None
+    assistant: Optional[UserResponse] = None
+    students: List[UserResponse] = []
     class Config:
         from_attributes = True
 

@@ -9,7 +9,9 @@ export default function AdminUsers() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'student', teamId: '', createNewTeam: false, newTeamName: '', newTeamProjectTitle: '', bio: '' });
+  const [newTeam, setNewTeam] = useState({ name: '', project_title: '', color: '#3b82f6', emoji: '🚀' });
 
   useEffect(() => {
     fetchData();
@@ -33,6 +35,21 @@ export default function AdminUsers() {
   const handleAddUser = async (e) => {
     e.preventDefault();
     try {
+      let finalTeamId = newUser.teamId || null;
+      let newTeamObj = null;
+
+      if (newUser.createNewTeam) {
+         const teamPayload = {
+            name: newUser.newTeamName,
+            project_title: newUser.newTeamProjectTitle,
+            color: '#3b82f6',
+            emoji: '🚀'
+         };
+         const teamRes = await adminService.createTeam(teamPayload);
+         newTeamObj = teamRes.data;
+         finalTeamId = newTeamObj.id;
+      }
+
       const payload = {
         id: "",
         name: newUser.name,
@@ -40,37 +57,44 @@ export default function AdminUsers() {
         password: newUser.password,
         role: newUser.role,
         bio: newUser.bio,
-        team_id: newUser.teamId || null,
+        team_id: finalTeamId,
       };
 
       const res = await adminService.createUser(payload);
       const newUserObj = res.data;
       
       let updatedTeams = [...teams];
-      if (newUser.role === 'student' && newUser.createNewTeam) {
-         const newTeamObj = {
-            id: `T${Date.now()}`,
-            name: newUser.newTeamName,
-            project_title: newUser.newTeamProjectTitle,
-            professor_id: null,
-            progress: 0,
-            students: [newUserObj],
-            emoji: '🚀',
-            color: '#3b82f6'
-         };
+      if (newTeamObj) {
+         if (newUser.role === 'professor') {
+            newTeamObj.professor_id = newUserObj.id;
+         } else if (newUser.role === 'student') {
+            newTeamObj.students = [newUserObj];
+         }
          updatedTeams.push(newTeamObj);
-         newUserObj.teamId = newTeamObj.id;
-      } else if (newUser.role === 'professor' && newUser.teamId) {
-          updatedTeams = updatedTeams.map(t => t.id === newUser.teamId ? { ...t, professor_id: newUserObj.id } : t);
+      } else if (newUser.role === 'professor' && finalTeamId) {
+          updatedTeams = updatedTeams.map(t => t.id === finalTeamId ? { ...t, professor_id: newUserObj.id } : t);
       }
 
       setTeams(updatedTeams);
-      setUsers([newUserObj, ...users]); // Add to beginning of list
+      setUsers([newUserObj, ...users]);
       setIsAddUserModalOpen(false);
       setNewUser({ name: '', email: '', password: '', role: 'student', teamId: '', createNewTeam: false, newTeamName: '', newTeamProjectTitle: '', bio: '' });
     } catch (err) {
-      console.error("Failed to create user", err);
-      alert(err.response?.data?.detail || "Failed to create user. Please check if email already exists.");
+      console.error("Failed to create user or team", err);
+      alert(err.response?.data?.detail || "Failed to create user or team. Please check inputs.");
+    }
+  };
+
+  const handleAddTeam = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await adminService.createTeam(newTeam);
+      setTeams([res.data, ...teams]);
+      setIsAddTeamModalOpen(false);
+      setNewTeam({ name: '', project_title: '', color: '#3b82f6', emoji: '🚀' });
+    } catch (err) {
+      console.error("Failed to create team", err);
+      alert("Failed to create team. Please try again.");
     }
   };
 
@@ -106,9 +130,16 @@ export default function AdminUsers() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="input pl-9" />
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative max-w-sm flex-1">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="input pl-9" />
+        </div>
+        {tab === 'teams' && (
+          <button onClick={() => setIsAddTeamModalOpen(true)} className="btn-primary text-sm whitespace-nowrap">
+            <Plus className="w-4 h-4" /> Add Team
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -250,9 +281,23 @@ export default function AdminUsers() {
                 </select>
               </div>
 
-              {newUser.role === 'professor' && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Supervise Team (Optional)</label>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {newUser.role === 'professor' ? 'Supervise Team (Optional)' : 'Team Assignment (Optional)'}
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={newUser.createNewTeam}
+                      onChange={e => setNewUser({...newUser, createNewTeam: e.target.checked, teamId: ''})}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    Create New Team
+                  </label>
+                </div>
+
+                {!newUser.createNewTeam ? (
                   <select 
                     value={newUser.teamId}
                     onChange={e => setNewUser({...newUser, teamId: e.target.value})}
@@ -261,71 +306,43 @@ export default function AdminUsers() {
                     <option value="">No Team Assigned</option>
                     {teams.map(t => <option key={t.id} value={t.id}>{t.name} ({t.project_title})</option>)}
                   </select>
-                </div>
-              )}
+                ) : (
+                  <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-100 dark:border-slate-700">
+                    <div>
+                      <input 
+                        required={newUser.createNewTeam}
+                        type="text" 
+                        value={newUser.newTeamName}
+                        onChange={e => setNewUser({...newUser, newTeamName: e.target.value})}
+                        className="input w-full text-sm py-1.5" 
+                        placeholder="New Team Name (e.g. AI Visionaries)"
+                      />
+                    </div>
+                    <div>
+                      <input 
+                        required={newUser.createNewTeam}
+                        type="text" 
+                        value={newUser.newTeamProjectTitle}
+                        onChange={e => setNewUser({...newUser, newTeamProjectTitle: e.target.value})}
+                        className="input w-full text-sm py-1.5" 
+                        placeholder="Project Title"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {newUser.role === 'student' && (
-                <>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Team Assignment</label>
-                      <label className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={newUser.createNewTeam}
-                          onChange={e => setNewUser({...newUser, createNewTeam: e.target.checked, teamId: ''})}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        Create New Team
-                      </label>
-                    </div>
-
-                    {!newUser.createNewTeam ? (
-                      <select 
-                        value={newUser.teamId}
-                        onChange={e => setNewUser({...newUser, teamId: e.target.value})}
-                        className="input w-full"
-                      >
-                        <option value="">No Team Assigned</option>
-                        {teams.map(t => <option key={t.id} value={t.id}>{t.name} ({t.project_title})</option>)}
-                      </select>
-                    ) : (
-                      <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-100 dark:border-slate-700">
-                        <div>
-                          <input 
-                            required={newUser.createNewTeam}
-                            type="text" 
-                            value={newUser.newTeamName}
-                            onChange={e => setNewUser({...newUser, newTeamName: e.target.value})}
-                            className="input w-full text-sm py-1.5" 
-                            placeholder="New Team Name (e.g. AI Visionaries)"
-                          />
-                        </div>
-                        <div>
-                          <input 
-                            required={newUser.createNewTeam}
-                            type="text" 
-                            value={newUser.newTeamProjectTitle}
-                            onChange={e => setNewUser({...newUser, newTeamProjectTitle: e.target.value})}
-                            className="input w-full text-sm py-1.5" 
-                            placeholder="Project Title"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bio (Optional)</label>
-                    <textarea 
-                      value={newUser.bio}
-                      onChange={e => setNewUser({...newUser, bio: e.target.value})}
-                      className="input w-full resize-none" 
-                      rows="2"
-                      placeholder="Short bio..."
-                    ></textarea>
-                  </div>
-                </>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Bio (Optional)</label>
+                  <textarea 
+                    value={newUser.bio}
+                    onChange={e => setNewUser({...newUser, bio: e.target.value})}
+                    className="input w-full resize-none" 
+                    rows="2"
+                    placeholder="Short bio..."
+                  ></textarea>
+                </div>
               )}
 
               <div className="flex justify-end gap-3 mt-6">
@@ -342,6 +359,43 @@ export default function AdminUsers() {
                 >
                   Save User
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Add Team Modal */}
+      {isAddTeamModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">Create New Team</h3>
+              <button onClick={() => setIsAddTeamModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleAddTeam} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Team Name</label>
+                <input required type="text" value={newTeam.name} onChange={e => setNewTeam({...newTeam, name: e.target.value})} className="input w-full" placeholder="e.g. AI Pioneers" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Project Title</label>
+                <input required type="text" value={newTeam.project_title} onChange={e => setNewTeam({...newTeam, project_title: e.target.value})} className="input w-full" placeholder="e.g. Smart City Platform" />
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Color</label>
+                  <input type="color" value={newTeam.color} onChange={e => setNewTeam({...newTeam, color: e.target.value})} className="h-10 w-full rounded-lg border-none p-0 cursor-pointer" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Emoji</label>
+                  <input type="text" value={newTeam.emoji} onChange={e => setNewTeam({...newTeam, emoji: e.target.value})} className="input w-full text-center text-xl" placeholder="🚀" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsAddTeamModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" className="btn-primary px-6">Create Team</button>
               </div>
             </form>
           </div>
