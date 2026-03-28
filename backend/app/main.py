@@ -253,7 +253,7 @@ def get_chat_summary(team_id: str, db: Session = Depends(get_db)):
             chat_history += f"{name}: {text}\n"
         
         # Call Gemini
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         prompt = f"""
         أنت مساعد ذكي لمشروعات التخرج. 
         بناءً على المحادثة التالية بين أعضاء الفريق، قم بكتابة ملخص موجز جداً (باللغة العربية) 
