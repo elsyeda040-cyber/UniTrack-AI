@@ -19,6 +19,9 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
+class UserUpdateTeam(BaseModel):
+    team_id: Optional[str] = None
+
 class TaskBase(BaseModel):
     id: str
     team_id: str

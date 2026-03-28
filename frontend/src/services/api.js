@@ -38,6 +38,7 @@ export const adminService = {
   getUsers: () => api.get('/admin/users'),
   createUser: (data) => api.post('/admin/users', data),
   createTeam: (data) => api.post('/admin/teams', data),
+  updateUserTeam: (userId, teamId) => api.put(`/admin/users/${userId}/team`, { team_id: teamId }),
 };
 
 export const aiService = {

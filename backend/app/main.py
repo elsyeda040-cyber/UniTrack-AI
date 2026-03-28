@@ -336,3 +336,42 @@ def get_all_users(db: Session = Depends(get_db)):
             "teamId": team_id
         })
     return result
+
+@app.put("/admin/users/{user_id}/team", response_model=schemas.UserResponse)
+def update_user_team(user_id: str, data: schemas.UserUpdateTeam, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Clear current team
+    if user.role == 'student':
+        user.teams_as_student = []
+    elif user.role == 'professor':
+        prof_teams = db.query(models.Team).filter(models.Team.professor_id == user_id).all()
+        for t in prof_teams:
+            t.professor_id = None
+            
+    # Assign new team
+    if data.team_id:
+        team = db.query(models.Team).filter(models.Team.id == data.team_id).first()
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
+        
+        if user.role == 'student':
+            team.students.append(user)
+        elif user.role == 'professor':
+            team.professor_id = user.id
+            
+    db.commit()
+    db.refresh(user)
+    
+    # Return formatted response
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role,
+        "avatar": user.avatar,
+        "bio": user.bio,
+        "teamId": data.team_id
+    }

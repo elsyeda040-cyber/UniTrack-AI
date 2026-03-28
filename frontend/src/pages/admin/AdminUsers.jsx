@@ -10,6 +10,9 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
+  const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [newTeamId, setNewTeamId] = useState('');
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'student', teamId: '', createNewTeam: false, newTeamName: '', newTeamProjectTitle: '', bio: '' });
   const [newTeam, setNewTeam] = useState({ name: '', project_title: '', color: '#3b82f6', emoji: '🚀' });
 
@@ -98,6 +101,19 @@ export default function AdminUsers() {
     }
   };
 
+  const handleUpdateTeam = async (e) => {
+    e.preventDefault();
+    try {
+      await adminService.updateUserTeam(editingUser.id, newTeamId);
+      // Refresh data to reflect changes
+      fetchData();
+      setIsEditTeamModalOpen(false);
+    } catch (err) {
+      console.error("Failed to update user team", err);
+      alert("Failed to update team assignment.");
+    }
+  };
+
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(search.toLowerCase()) || 
     u.email.toLowerCase().includes(search.toLowerCase())
@@ -165,7 +181,12 @@ export default function AdminUsers() {
                       {teams.filter(t => t.professor_id === p.id).length}
                     </td>
                     <td className="py-3 font-bold text-amber-500">4.8 ⭐</td>
-                    <td className="py-3"><button onClick={() => alert('تم إرسال طلب حذف المستخدم للمراجعة')} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 className="w-4 h-4" /></button></td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => { setEditingUser(p); setNewTeamId(p.teamId || ''); setIsEditTeamModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">Move</button>
+                        <button onClick={() => alert('تم إرسال طلب حذف المستخدم للمراجعة')} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -193,7 +214,10 @@ export default function AdminUsers() {
                     </td>
                     <td className="py-3 text-slate-500">{s.email}</td>
                     <td className="py-3 text-slate-400 text-xs">{s.teamId || 'No Team'}</td>
-                    <td className="py-3 text-slate-400 truncate max-w-[200px]">{s.bio}</td>
+                    <td className="py-3 text-slate-400 truncate max-w-[150px]">{s.bio}</td>
+                    <td className="py-3">
+                      <button onClick={() => { setEditingUser(s); setNewTeamId(s.teamId || ''); setIsEditTeamModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">Change Team</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -396,6 +420,41 @@ export default function AdminUsers() {
               <div className="flex justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setIsAddTeamModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">Cancel</button>
                 <button type="submit" className="btn-primary px-6">Create Team</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Team Modal */}
+      {isEditTeamModalOpen && editingUser && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">Change Team Alignment</h3>
+              <button onClick={() => setIsEditTeamModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateTeam} className="p-6 space-y-4">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-4">
+                <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">User: {editingUser.name}</p>
+                <p className="text-xs text-blue-600/70 dark:text-blue-400/70 uppercase font-bold tracking-wider mt-1">{editingUser.role}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Select New Team</label>
+                <select 
+                  value={newTeamId}
+                  onChange={e => setNewTeamId(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="">No Team (Unassigned)</option>
+                  {teams.map(t => <option key={t.id} value={t.id}>{t.name} ({t.project_title})</option>)}
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsEditTeamModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" className="btn-primary px-6">Update Team</button>
               </div>
             </form>
           </div>

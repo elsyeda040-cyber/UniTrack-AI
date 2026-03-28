@@ -18,10 +18,28 @@ export const AppProvider = ({ children }) => {
     if (user) {
       localStorage.setItem('unitrack_user', JSON.stringify(user));
       fetchNotifications();
+      
+      const interval = setInterval(() => {
+        syncProfile();
+      }, 10000); 
+      return () => clearInterval(interval);
     } else {
       localStorage.removeItem('unitrack_user');
     }
   }, [user]);
+
+  const syncProfile = async () => {
+    if (!user) return;
+    try {
+      const res = await userService.getProfile(user.id);
+      if (res.data.teamId !== user.teamId) {
+        setUser(res.data);
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("Profile sync failed", err);
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem('unitrack_dark', darkMode);
