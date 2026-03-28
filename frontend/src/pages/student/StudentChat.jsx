@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { teamService } from '../../services/api';
-import { Send, Paperclip, Mic, Trash2, Play, FileText, Download, Loader2 } from 'lucide-react';
+import { Send, Paperclip, Mic, Trash2, Play, FileText, Download, Loader2, Sparkles, X } from 'lucide-react';
 
 const roleColor = { professor: 'from-purple-500 to-purple-600', assistant: 'from-emerald-500 to-emerald-600', student: 'from-blue-500 to-blue-600' };
 
@@ -13,6 +13,11 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef(null);
+  
+  // AI Summary States
+  const [summary, setSummary] = useState('');
+  const [showSummary, setShowSummary] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   useEffect(() => {
     clearChatBadge();
@@ -163,7 +168,21 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
       alert("Failed to send message. Please try again.");
       console.error("Failed to send message", err);
     } finally {
-      setIsRecording(false);
+      setLoading(false);
+    }
+  };
+
+  const handleGetSummary = async () => {
+    if (!activeTeamId) return;
+    setIsSummarizing(true);
+    try {
+      const res = await teamService.getChatSummary(activeTeamId);
+      setSummary(res.data.summary);
+      setShowSummary(true);
+    } catch (err) {
+      console.error("AI Summary failed", err);
+    } finally {
+      setIsSummarizing(false);
     }
   };
 
@@ -239,15 +258,33 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] animate-fade-in">
-      <div className="card mb-4 flex items-center gap-3 py-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold">
-          {activeTeamId?.charAt(0).toUpperCase() || 'T'}
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md sticky top-0 z-10 rounded-t-2xl">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${roleColor[user.role] || 'from-blue-600 to-blue-700'} flex items-center justify-center text-white shadow-lg`}>
+            {activeTeamName.charAt(0)}
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800 dark:text-white leading-tight">{activeTeamName}</h3>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Active Workspace</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <p className="font-bold text-slate-800 dark:text-white">{activeTeamName}</p>
-          <p className="text-xs text-slate-400">Collaborate with your team members</p>
-        </div>
-        <span className="ml-auto flex items-center gap-1 text-xs text-emerald-500 font-semibold"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Live</span>
+        
+        <button 
+          onClick={handleGetSummary}
+          disabled={isSummarizing}
+          className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all font-medium text-xs group border border-blue-100 dark:border-blue-800"
+        >
+          {isSummarizing ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Sparkles className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+          )}
+          <span>AI Summary</span>
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-4 px-1 pb-2 scrollbar-hide">
@@ -343,6 +380,46 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
           </>
         )}
       </div>
+
+      {/* AI Summary Modal */}
+      {showSummary && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowSummary(false)}>
+          <div 
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-bold text-slate-800 dark:text-white">ملخص الشات (AI)</span>
+              </div>
+              <button 
+                onClick={() => setShowSummary(false)}
+                className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                {summary}
+              </div>
+            </div>
+            
+            <div className="px-5 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex justify-end">
+              <button 
+                onClick={() => setShowSummary(false)}
+                className="px-5 py-2 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-lg"
+              >
+                فهمت
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

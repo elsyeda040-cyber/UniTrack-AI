@@ -23,6 +23,7 @@ export const teamService = {
   updateTask: (taskId, data) => api.put(`/tasks/${taskId}`, data),
   getMessages: (teamId) => api.get(`/teams/${teamId}/messages`),
   sendMessage: (teamId, data) => api.post(`/teams/${teamId}/messages`, data),
+  getChatSummary: (teamId) => api.post(`/teams/${teamId}/chat-summary`),
   getAll: () => api.get('/teams'),
 };
 

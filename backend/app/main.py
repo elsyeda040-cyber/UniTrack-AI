@@ -227,6 +227,40 @@ def get_messages(team_id: str, db: Session = Depends(get_db)):
         })
     return result
 
+@app.post("/teams/{team_id}/chat-summary")
+def get_chat_summary(team_id: str, db: Session = Depends(get_db)):
+    try:
+        # Fetch last 50 messages
+        messages = db.query(models.Message).filter(models.Message.team_id == team_id).order_by(models.Message.time.desc()).limit(50).all()
+        if not messages:
+            return {"summary": "لا توجد رسائل كافية للتلخيص حالياً."}
+        
+        # Format messages for AI
+        chat_history = ""
+        for msg in reversed(messages):
+            sender = db.query(models.User).filter(models.User.id == msg.sender_id).first()
+            name = sender.name if sender else "Member"
+            text = msg.text if msg.type == 'text' else "[Media/File]"
+            chat_history += f"{name}: {text}\n"
+        
+        # Call Gemini
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"""
+        أنت مساعد ذكي لمشروعات التخرج. 
+        بناءً على المحادثة التالية بين أعضاء الفريق، قم بكتابة ملخص موجز جداً (باللغة العربية) 
+        يوضح أهم ما تم مناقشته، القرارات التي تم اتخاذها، والمهام المتبقية إن وجدت.
+        اجعل الملخص في شكل نقاط بسيطة وسهلة القراءة.
+        
+        المحادثة:
+        {chat_history}
+        """
+        
+        response = model.generate_content(prompt)
+        return {"summary": response.text}
+    except Exception as e:
+        print(f"AI_ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="فشل في توليد الملخص بالذكاء الاصطناعي")
+
 @app.post("/teams/{team_id}/messages", response_model=schemas.MessageResponse)
 def create_message(team_id: str, msg: schemas.MessageBase, db: Session = Depends(get_db)):
     try:
