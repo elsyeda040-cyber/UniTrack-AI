@@ -229,43 +229,53 @@ def get_messages(team_id: str, db: Session = Depends(get_db)):
 
 @app.post("/teams/{team_id}/messages", response_model=schemas.MessageResponse)
 def create_message(team_id: str, msg: schemas.MessageBase, db: Session = Depends(get_db)):
-    new_msg = models.Message(**msg.dict())
-    new_msg.team_id = team_id
-    new_msg.is_own = True 
-    db.add(new_msg)
-    
-    # Create notifications for team members
-    team = db.query(models.Team).filter(models.Team.id == team_id).first()
-    if team:
-        # Collect all potential recipients
-        recipients = []
-        # Explicitly query students to avoid lazy loading issues
-        recipients = [s.id for s in team.students]
+    try:
+        new_msg = models.Message(**msg.dict())
+        new_msg.team_id = team_id
+        new_msg.is_own = True 
+        db.add(new_msg)
         
-        if team.professor_id: recipients.append(team.professor_id)
-        if team.assistant_id: recipients.append(team.assistant_id)
+        # Robust notification logic
+        # 1. Find the team (try exact match then case-insensitive)
+        team = db.query(models.Team).filter(models.Team.id == team_id).first()
+        if not team:
+             team = db.query(models.Team).filter(models.Team.id.ilike(team_id)).first()
         
-        # Filter out sender and duplicates
-        recipients = list(set([r for r in recipients if r != msg.sender_id]))
-        
-        sender = db.query(models.User).filter(models.User.id == msg.sender_id).first()
-        sender_name = sender.name if sender else "Member"
-        
-        for r_id in recipients:
-            notif = models.Notification(
-                user_id=r_id,
-                type="chat",
-                title=f"New Message from {sender_name}",
-                message=msg.text[:50] + "..." if msg.text and len(msg.text) > 50 else (msg.text or "Sent a file/image"),
-                time=datetime.now().isoformat(),
-                read=False
-            )
-            db.add(notif)
-            print(f"Created notification for user {r_id} from {sender_name}")
+        if team:
+            # 2. Collect ALL potential member IDs
+            recipient_ids = []
+            for student in team.students:
+                recipient_ids.append(student.id)
+            if team.professor_id: recipient_ids.append(team.professor_id)
+            if team.assistant_id: recipient_ids.append(team.assistant_id)
+            
+            # 3. Filter: unique, not the sender
+            final_recipients = set([r for r in recipient_ids if str(r).lower() != str(msg.sender_id).lower()])
+            
+            sender = db.query(models.User).filter(models.User.id == msg.sender_id).first()
+            sender_display_name = sender.name if sender else "Member"
+            
+            text_preview = (msg.text[:50] + "...") if msg.text and len(msg.text) > 50 else (msg.text or "Sent a file")
+            
+            for r_id in final_recipients:
+                notif = models.Notification(
+                    user_id=r_id,
+                    type="chat",
+                    title=f"Chat: {sender_display_name}",
+                    message=text_preview,
+                    time=datetime.now().isoformat(),
+                    read=False
+                )
+                db.add(notif)
+                print(f"NOTIF_DEBUG: Created chat notif for {r_id}")
 
-    db.commit()
-    db.refresh(new_msg)
-    return new_msg
+        db.commit()
+        db.refresh(new_msg)
+        return new_msg
+    except Exception as e:
+        db.rollback()
+        print(f"CHAT_ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/users/{user_id}/notifications/clear-chat")
 def clear_chat_notifications(user_id: str, db: Session = Depends(get_db)):

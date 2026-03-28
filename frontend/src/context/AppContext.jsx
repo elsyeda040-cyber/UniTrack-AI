@@ -50,11 +50,14 @@ export const AppProvider = ({ children }) => {
   }, [darkMode]);
 
   const fetchNotifications = async () => {
+    if (!user) return;
     try {
       const res = await userService.getNotifications(user.id);
       const allNotifs = res.data;
+      console.log(`[SYNC] Found ${allNotifs.length} notifications for ${user.id}`);
       setNotifications(allNotifs.filter(n => !n.read).length);
-      setUnreadChatCount(allNotifs.filter(n => n.type === 'chat' && !n.read).length);
+      const chatUnread = allNotifs.filter(n => n.type === 'chat' && !n.read).length;
+      setUnreadChatCount(chatUnread);
     } catch (err) {
       console.error("Failed to fetch notifications", err);
     }
@@ -63,6 +66,7 @@ export const AppProvider = ({ children }) => {
   const clearChatBadge = async () => {
     if (!user) return;
     try {
+      console.log(`[SYNC] Clearing chat badge for ${user.id}`);
       await userService.clearChatNotifications(user.id);
       fetchNotifications();
     } catch (err) {
