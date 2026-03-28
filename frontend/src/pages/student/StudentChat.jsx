@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { teamService } from '../../services/api';
-import { Send, Paperclip, Mic, Trash2, Play, FileText, Download, Loader2, Sparkles, X, Pencil, Check } from 'lucide-react';
+import { Send, Paperclip, Mic, Trash2, Play, FileText, Download, Loader2, Sparkles, X, Pencil, Check, MoreVertical } from 'lucide-react';
 
 const roleColor = { professor: 'from-purple-500 to-purple-600', assistant: 'from-emerald-500 to-emerald-600', student: 'from-blue-500 to-blue-600' };
 
@@ -22,9 +22,13 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
   // Message Edit/Delete States
   const [editingMsgId, setEditingMsgId] = useState(null);
   const [editValue, setEditValue] = useState("");
+  const [activeMenuId, setActiveMenuId] = useState(null);
 
   useEffect(() => {
     clearChatBadge();
+    const handleClickAway = () => setActiveMenuId(null);
+    window.addEventListener('click', handleClickAway);
+    return () => window.removeEventListener('click', handleClickAway);
   }, []);
   const fileInputRef = useRef(null);
   const textInputRef = useRef(null); // قراءة مباشرة من DOM لتجنب مشاكل IME على الموبايل
@@ -342,23 +346,34 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
                   : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-card rounded-tl-sm'
               } ${msg.type === 'image' ? 'p-1' : ''}`}>
                 
-                {/* Edit/Delete Actions */}
+                {/* Edit/Delete Menu Button */}
                 {isOwn && !editingMsgId && (
-                  <div className="absolute top-0 right-full mr-2 hidden group-hover:flex items-center gap-1">
-                    <button 
-                      onClick={() => { setEditingMsgId(msg.id); setEditValue(msg.text); }}
-                      className="p-1 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 transition-colors"
-                      title="Edit"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(msg.id)}
-                      className="p-1 px-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-white flex items-center gap-1.5 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  <div className="absolute top-1/2 -left-8 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="relative">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === msg.id ? null : msg.id); }}
+                        className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                      
+                      {activeMenuId === msg.id && (
+                        <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl py-1 z-20 min-w-[100px] animate-fade-in">
+                          <button 
+                            onClick={() => { setEditingMsgId(msg.id); setEditValue(msg.text); setActiveMenuId(null); }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" /> تعديل
+                          </button>
+                          <button 
+                            onClick={() => { handleDelete(msg.id); setActiveMenuId(null); }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> حذف
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
