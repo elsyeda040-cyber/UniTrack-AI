@@ -516,8 +516,8 @@ def delete_user(user_id: str, db: Session = Depends(get_db)):
         for t in ta_teams:
             t.assistant_id = None
             
-    # 2. Delete messages
-    db.query(models.Message).filter(models.Message.sender_id == user_id).delete()
+    # 2. Preserve messages by setting sender_id to NULL
+    db.query(models.Message).filter(models.Message.sender_id == user_id).update({models.Message.sender_id: None})
     
     # 3. Delete notifications
     db.query(models.Notification).filter(models.Notification.user_id == user_id).delete()
