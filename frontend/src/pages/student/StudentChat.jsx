@@ -7,6 +7,8 @@ const roleColor = { professor: 'from-purple-500 to-purple-600', assistant: 'from
 
 export default function StudentChat({ teamId: propTeamId, teamName: propTeamName }) {
   const { user, clearChatBadge } = useApp();
+  if (!user) return null;
+
   const activeTeamId = propTeamId || user?.teamId;
   const activeTeamName = propTeamName || 'Workspace Chat';
   const [messages, setMessages] = useState([]);
@@ -344,10 +346,10 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
 
       <div className="flex-1 overflow-y-auto space-y-4 px-1 pb-2 scrollbar-hide">
         {messages.map((msg, idx) => {
-          if (!msg) return null;
-          const isOwn = msg.sender_id === user.id;
-          const msgSender = isOwn ? user.name : (msg.sender || 'Member');
-          const msgRole = isOwn ? user.role : (msg.role || 'student');
+          if (!msg || !user) return null;
+          const isOwn = String(msg.sender_id) === String(user.id);
+          const msgSender = isOwn ? (user.name || 'Me') : (msg.sender || 'Member');
+          const msgRole = isOwn ? (user.role || 'student') : (msg.role || 'student');
           return (
           <div key={msg.id || idx} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
             <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold bg-gradient-to-br ${roleColor[msgRole] || 'from-slate-400 to-slate-500'}`}>
