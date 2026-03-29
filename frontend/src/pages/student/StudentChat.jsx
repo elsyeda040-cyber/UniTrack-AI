@@ -181,28 +181,41 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
   };
 
   const handleUpdate = async (msgId) => {
-    if (!editValue.trim()) return;
+    if (!editValue.trim() || !user) return;
     try {
+      // Optimistic logic: update local state immediately
+      const updatedMessages = messages.map(m => 
+        m.id === msgId ? { ...m, text: editValue } : m
+      );
+      setMessages(updatedMessages);
+      setEditingMsgId(null);
+
       await teamService.updateMessage(activeTeamId, msgId, { 
-        sender_id: user.id, 
+        sender_id: user.id || '', 
         text: editValue,
         team_id: activeTeamId,
         type: 'text'
       });
-      setEditingMsgId(null);
       fetchMessages(true);
     } catch (err) {
       console.error("Failed to update message", err);
+      alert("فشل تحديث الرسالة. يرجى المحاولة مرة أخرى.");
+      fetchMessages(true); // Revert to server state
     }
   };
 
   const handleDelete = async (msgId) => {
-    if (!window.confirm("هل أنت متأكد من حذف هذه الرسالة؟")) return;
+    if (!window.confirm("هل أنت متأكد من حذف هذه الرسالة؟") || !user) return;
     try {
+      // Optimistic logic: remove from local state immediately
+      setMessages(messages.filter(m => m.id !== msgId));
+      
       await teamService.deleteMessage(activeTeamId, msgId, user.id);
       fetchMessages(true);
     } catch (err) {
       console.error("Failed to delete message", err);
+      alert("فشل حذف الرسالة. يرجى المحاولة مرة أخرى.");
+      fetchMessages(true); // Revert to server state
     }
   };
 
@@ -338,7 +351,7 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
           return (
           <div key={msg.id || idx} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
             <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold bg-gradient-to-br ${roleColor[msgRole] || 'from-slate-400 to-slate-500'}`}>
-              {(msgSender || 'U').charAt(0)}
+              {String(msgSender || 'U').charAt(0)}
             </div>
             <div className={`max-w-xs lg:max-w-md ${isOwn ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
               {!isOwn && <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{msgSender}</p>}
@@ -419,8 +432,12 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
               <p className="text-xs text-slate-400 font-mono tracking-tighter">
                 {(() => {
                   const timeStr = msg.time || new Date().toISOString();
-                  const dateObj = new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
-                  return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                  try {
+                    const dateObj = new Date(typeof timeStr === 'string' && timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
+                    return isNaN(dateObj.getTime()) ? "..." : dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                  } catch (e) {
+                    return "...";
+                  }
                 })()}
               </p>
             </div>
