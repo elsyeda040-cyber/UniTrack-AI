@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { teamService } from '../../services/api';
-import { CheckCircle2, Clock, AlertCircle, TrendingUp, Star, Trophy, ArrowRight, Loader2 } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, TrendingUp, Star, Trophy, ArrowRight, Loader2, FileText, Calendar, ShoppingBag, Briefcase, ChevronRight, Sparkles } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import RiskSimulator from './RiskSimulator';
 
 const PROGRESS_HISTORY = [
   { week: 'W1', progress: 10 }, { week: 'W2', progress: 22 }, { week: 'W3', progress: 38 },
@@ -96,6 +97,31 @@ export default function StudentDashboard() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-3">
+        <button 
+          onClick={async () => {
+            try {
+              const res = await teamService.exportReport(user.teamId);
+              const url = window.URL.createObjectURL(new Blob([res.data]));
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', `report_${user.teamId}.pdf`);
+              document.body.appendChild(link);
+              link.click();
+            } catch (err) { alert("Failed to export report"); }
+          }}
+          className="btn-secondary text-sm flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4 text-red-500" /> Export PDF Report
+        </button>
+        <a 
+          href={teamService.getCalendarSyncUrl(user.teamId)}
+          className="btn-secondary text-sm flex items-center gap-2"
+        >
+          <Calendar className="w-4 h-4 text-blue-500" /> Sync to Calendar (.ics)
+        </a>
+      </div>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={CheckCircle2} label="Completed Tasks" value={completed} sub={`of ${tasks.length} total`} color="bg-emerald-500" />
         <StatCard icon={Clock} label="In Progress" value={inProgress} color="bg-amber-500" />
@@ -125,7 +151,7 @@ export default function StudentDashboard() {
           </ResponsiveContainer>
         </div>
 
-        <div className="card">
+         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-500" /> Your Team</h3>
           </div>
@@ -134,10 +160,54 @@ export default function StudentDashboard() {
                 <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Active Team</p>
                 <p className="text-lg font-bold text-slate-700 dark:text-white">{user?.teamId || 'T1042 - Alpha Team'}</p>
              </div>
-             <p className="text-xs text-slate-400 text-center px-4">Visit the team page to see detailed rankings and group activities.</p>
+             
+             {/* Futuristic Risk Simulator */}
+             <RiskSimulator />
+
              <button onClick={() => alert('Viewing team details...')} className="w-full btn-primary py-2 text-sm mt-2">View Team Workspace</button>
           </div>
         </div>
+      </div>
+
+      {/* Row with expanded features accessibility */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="card bg-slate-900 dark:bg-white text-white dark:text-slate-900 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all">
+             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 dark:bg-slate-900/10 rounded-full group-hover:scale-150 transition-transform" />
+             <div className="relative z-10 flex flex-col items-center py-4 text-center">
+                <Sparkles className="w-8 h-8 mb-4 text-amber-400" />
+                <h4 className="font-bold">Hackathon Mode</h4>
+                <p className="text-[10px] opacity-70 mb-4 px-8">Intense productivity sprint active.</p>
+                <div className="w-12 h-6 bg-emerald-500 rounded-full relative">
+                   <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
+                </div>
+             </div>
+          </div>
+
+          <Link to="/student/career" className="card group hover:border-indigo-500 transition-all border-2 border-transparent">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center">
+                   <Briefcase className="w-6 h-6" />
+                </div>
+                <div>
+                   <h4 className="font-bold text-slate-800 dark:text-white">Career Navigator</h4>
+                   <p className="text-xs text-slate-400">Map your skills to the market.</p>
+                </div>
+                <ChevronRight className="w-4 h-4 ml-auto text-slate-300 group-hover:translate-x-1 transition-all" />
+             </div>
+          </Link>
+
+          <Link to="/student/market" className="card group hover:border-emerald-500 transition-all border-2 border-transparent">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center">
+                   <ShoppingBag className="w-6 h-6" />
+                </div>
+                <div>
+                   <h4 className="font-bold text-slate-800 dark:text-white">Help Market</h4>
+                   <p className="text-xs text-slate-400">Collaborate and earn credits.</p>
+                </div>
+                <ChevronRight className="w-4 h-4 ml-auto text-slate-300 group-hover:translate-x-1 transition-all" />
+             </div>
+          </Link>
       </div>
 
       <div className="card">

@@ -16,6 +16,9 @@ export const userService = {
   updateProfile: (userId, data) => api.put(`/users/${userId}`, data),
   getNotifications: (userId) => api.get(`/users/${userId}/notifications`),
   clearChatNotifications: (userId) => api.post(`/users/${userId}/notifications/clear-chat`),
+  getBadges: (userId) => api.get(`/users/${userId}/badges`),
+  getLeaderboard: () => api.get('/leaderboard'),
+  analyzeCareer: (userId) => api.post(`/users/${userId}/analyze-career`),
 };
 
 export const teamService = {
@@ -29,10 +32,39 @@ export const teamService = {
   getTimeline: (teamId) => api.get(`/teams/${teamId}/timeline`),
   getFiles: (teamId) => api.get(`/teams/${teamId}/files`),
   getReviews: (teamId) => api.get(`/teams/${teamId}/reviews`),
+  getTeamInsights: (teamId) => api.post(`/teams/${teamId}/insights`),
+  getScratchpad: (teamId) => api.get(`/teams/${teamId}/scratchpad`),
+  updateScratchpad: (teamId, content) => api.post(`/teams/${teamId}/scratchpad`, { content }),
+  exportReport: (teamId) => api.post(`/teams/${teamId}/report/export`, {}, { responseType: 'blob' }),
+  getCalendarSyncUrl: (teamId) => `${api.defaults.baseURL}/teams/${teamId}/calendar/sync`,
   createReview: (data) => api.post('/reviews', data),
   createEvent: (data) => api.post('/events', data),
   getAll: () => api.get('/teams'),
+  
+  // Advanced Features
+  generateDocs: (teamId, docType) => api.post(`/teams/${teamId}/generate-docs`, null, { params: { doc_type: docType } }),
+  getDocs: (teamId) => api.get(`/teams/${teamId}/docs`),
+  getMeetings: (teamId) => api.get(`/teams/${teamId}/meetings`),
+  createMeeting: (teamId, data) => api.post(`/teams/${teamId}/meetings`, data),
+  getWhiteboard: (teamId) => api.get(`/teams/${teamId}/whiteboard`),
+  updateWhiteboard: (teamId, data) => api.post(`/teams/${teamId}/whiteboard`, { team_id: teamId, data }),
+  getRiskAssessment: (teamId) => api.get(`/teams/${teamId}/risk-assessment`),
+
+  // v3.0 Futuristic Features
+  reviewPresentation: (data) => api.post('/presentations/review', data),
+  getPresentations: (teamId) => api.get(`/teams/${teamId}/presentations`),
+  reviewCode: (code, language) => api.post('/ai/code-review', { code, language }),
+  simulateRisk: (teamId, hypothetical_delays) => api.post(`/teams/${teamId}/simulate-risk`, { team_id: teamId, hypothetical_delays }),
+  getSkillMatrix: (teamId) => api.get(`/teams/${teamId}/skill-matrix`),
+  sendVoiceCommand: (message) => api.post('/ai/voice-command', { message })
 };
+
+export const communityService = {
+  getHelpRequests: () => api.get('/help-requests'),
+  createHelpRequest: (data) => api.post('/help-requests', data),
+  solveHelpRequest: (reqId, solverId) => api.post(`/help-requests/${reqId}/solve`, null, { params: { solver_id: solverId } }),
+};
+
 
 export const professorService = {
   getTeams: (profId) => api.get(`/professors/${profId}/teams`),

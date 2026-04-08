@@ -21,6 +21,8 @@ class User(Base):
     avatar = Column(String, nullable=True)
     hashed_password = Column(String) # For simple auth
     bio = Column(String, nullable=True)
+    credits = Column(Integer, default=100)
+    skills = Column(String, nullable=True) # JSON string of skills
     
     # Relationships
     teams_as_student = relationship("Team", secondary=team_students, back_populates="students")
@@ -100,6 +102,21 @@ class Review(Base):
     comment = Column(String, nullable=True)
     date = Column(DateTime, default=datetime.utcnow)
 
+class Badge(Base):
+    __tablename__ = "badges"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    description = Column(String)
+    icon = Column(String) # Lucide icon name or emoji
+    color = Column(String)
+
+class UserBadge(Base):
+    __tablename__ = "user_badges"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey('users.id'))
+    badge_id = Column(Integer, ForeignKey('badges.id'))
+    date_earned = Column(DateTime, default=datetime.utcnow)
+
 class Notification(Base):
     __tablename__ = "notifications"
 
@@ -110,3 +127,66 @@ class Notification(Base):
     message = Column(String)
     time = Column(String) # e.g., "5 min ago" or ISO string
     read = Column(Boolean, default=False)
+
+class Scratchpad(Base):
+    __tablename__ = "scratchpads"
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(String, ForeignKey('teams.id'), unique=True)
+    content = Column(String, default="")
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Resource(Base):
+    __tablename__ = "resources"
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(String, ForeignKey('teams.id'))
+    title = Column(String)
+    url = Column(String)
+    type = Column(String) # e.g., "video", "article", "documentation"
+    description = Column(String, nullable=True)
+
+class Meeting(Base):
+    __tablename__ = "meetings"
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(String, ForeignKey('teams.id'))
+    title = Column(String)
+    date = Column(DateTime, default=datetime.utcnow)
+    transcript = Column(String, nullable=True)
+    summary = Column(String, nullable=True)
+    action_items = Column(String, nullable=True) # JSON string
+
+class ProjectDoc(Base):
+    __tablename__ = "project_docs"
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(String, ForeignKey('teams.id'))
+    title = Column(String)
+    content = Column(String)
+    type = Column(String) # e.g., "thesis", "technical_spec", "summary"
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class HelpRequest(Base):
+    __tablename__ = "help_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(String, ForeignKey('teams.id'))
+    user_id = Column(String, ForeignKey('users.id'))
+    title = Column(String)
+    description = Column(String)
+    bounty = Column(Integer, default=10)
+    status = Column(String, default="open") # open, closed, solved
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class WhiteboardData(Base) :
+    __tablename__ = "whiteboard_data"
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(String, ForeignKey('teams.id'), unique=True)
+    data = Column(String) # JSON string of canvas state
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class PresentationReview(Base):
+    __tablename__ = "presentation_reviews"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey('users.id'))
+    team_id = Column(String, ForeignKey('teams.id'))
+    title = Column(String)
+    review_json = Column(String) # Detailed AI feedback JSON
+    score = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow)

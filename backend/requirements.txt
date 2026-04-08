@@ -9,3 +9,5 @@ gunicorn
 python-dotenv
 google-generativeai
 psycopg2-binary
+fpdf2
+icalendar

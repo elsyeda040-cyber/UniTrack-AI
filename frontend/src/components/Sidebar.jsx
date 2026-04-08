@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
-  LayoutDashboard, CheckSquare, TrendingUp, FileText, MessageCircle,
-  Bot, Trophy, BarChart2, Bell, Settings, LogOut, ChevronRight,
-  Users, BookOpen, Shield, ClipboardList, Sun, Moon, Sparkles, Calendar, HardDrive, Star
+  Users, BookOpen, Shield, ClipboardList, Sun, Moon, Sparkles, Calendar, HardDrive, Star, Edit3, Book,
+  Video, ShoppingBag, Layers, Briefcase, FileCode, Monitor, Cpu, Terminal, LayoutDashboard, CheckSquare, 
+  TrendingUp, FileText, MessageCircle, Bot, BarChart2, Trophy, LogOut, Settings, Bell
 } from 'lucide-react';
 
 const studentNav = [
@@ -16,19 +16,41 @@ const studentNav = [
   { to: '/student/chat', icon: MessageCircle, label: 'Chat' },
   { to: '/student/peer-review', icon: Star, label: 'Peer Review' },
   { to: '/student/ai', icon: Bot, label: 'AI Assistant' },
+  { to: '/student/insights', icon: BarChart2, label: 'AI Insights' },
   { to: '/student/timeline', icon: Calendar, label: 'Timeline' },
+  { to: '/student/scratchpad', icon: Edit3, label: 'Scratchpad' },
+  { to: '/student/resource-library', icon: BookOpen, label: 'Library' },
   { to: '/student/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/student/reports', icon: BarChart2, label: 'Reports' },
+  { to: '/student/meetings', icon: Video, label: 'Meetings' },
+  { to: '/student/whiteboard', icon: Layers, label: 'Whiteboard' },
+  { to: '/student/market', icon: ShoppingBag, label: 'Help Market' },
+  { to: '/student/docs', icon: FileCode, label: 'AI Docs' },
+  { to: '/student/career', icon: Briefcase, label: 'Career' },
+  { to: '/student/presentation-coach', icon: Monitor, label: 'Pres Coach' },
+  { to: '/student/code-mentor', icon: Terminal, label: 'Code Mentor' },
+  { to: '/student/skill-matrix', icon: Cpu, label: 'Skill Matrix' },
   { to: '/student/notifications', icon: Bell, label: 'Notifications' },
 ];
 
 const professorNav = [
   { to: '/professor', icon: LayoutDashboard, label: 'My Teams', end: true },
   { to: '/professor/analytics', icon: BarChart2, label: 'Analytics' },
+  { to: '/professor/tasks', icon: CheckSquare, label: 'Tasks' },
+  { to: '/professor/grades', icon: Star, label: 'Grades' },
+  { to: '/professor/schedule', icon: Calendar, label: 'Schedule' },
+  { to: '/professor/notifications', icon: Bell, label: 'Notifications' },
   { to: '/professor/files', icon: HardDrive, label: 'Project Files' },
   { to: '/professor/chat', icon: MessageCircle, label: 'Chat' },
   { to: '/professor/ai', icon: Bot, label: 'AI Assistant' },
+  { to: '/professor/insights', icon: BarChart2, label: 'AI Insights' },
+  { to: '/professor/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/professor/timeline', icon: Calendar, label: 'Timeline' },
+  { to: '/professor/scratchpad', icon: Edit3, label: 'Team Notes' },
+  { to: '/professor/meetings', icon: Video, label: 'Meetings' },
+  { to: '/professor/docs', icon: FileCode, label: 'AI Docs' },
+  { to: '/professor/whiteboard', icon: Layers, label: 'Whiteboard' },
+  { to: '/professor/skill-matrix', icon: Cpu, label: 'Skill Matrix' },
 ];
 
 const assistantNav = [
@@ -36,13 +58,21 @@ const assistantNav = [
   { to: '/assistant/files', icon: HardDrive, label: 'Project Files' },
   { to: '/assistant/chat', icon: MessageCircle, label: 'Chat' },
   { to: '/assistant/ai', icon: Bot, label: 'AI Assistant' },
+  { to: '/assistant/insights', icon: BarChart2, label: 'AI Insights' },
+  { to: '/assistant/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/assistant/timeline', icon: Calendar, label: 'Timeline' },
+  { to: '/assistant/meetings', icon: Video, label: 'Meetings' },
+  { to: '/assistant/whiteboard', icon: Layers, label: 'Whiteboard' },
 ];
 
 const adminNav = [
   { to: '/admin', icon: Shield, label: 'Overview', end: true },
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/analytics', icon: BarChart2, label: 'Analytics' },
+  { to: '/admin/reports', icon: FileText, label: 'Reports' },
+  { to: '/admin/activity', icon: ClipboardList, label: 'Activity Log' },
+  { to: '/admin/insights', icon: BarChart2, label: 'AI Insights' },
+  { to: '/admin/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 

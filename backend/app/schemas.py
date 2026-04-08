@@ -9,6 +9,8 @@ class UserBase(BaseModel):
     role: str
     avatar: Optional[str] = None
     bio: Optional[str] = None
+    credits: int = 100
+    skills: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
@@ -119,11 +121,55 @@ class ReviewResponse(ReviewBase):
     class Config:
         from_attributes = True
 
+class BadgeBase(BaseModel):
+    name: str
+    description: str
+    icon: str
+    color: str
+
+class BadgeResponse(BadgeBase):
+    id: int
+    class Config:
+        from_attributes = True
+
+class UserBadgeResponse(BaseModel):
+    id: int
+    user_id: str
+    badge_id: int
+    date_earned: datetime
+    badge: BadgeResponse
+    class Config:
+        from_attributes = True
+
+class ScratchpadBase(BaseModel):
+    team_id: str
+    content: str
+
+class ScratchpadResponse(ScratchpadBase):
+    last_updated: datetime
+    class Config:
+        from_attributes = True
+
 class AdminStats(BaseModel):
     total_users: int
     total_teams: int
     total_tasks: int
     avg_progress: float
+
+class ResourceBase(BaseModel):
+    title: str
+    url: str
+    type: str
+    description: Optional[str] = None
+
+class ResourceResponse(ResourceBase):
+    id: int
+    team_id: str
+    class Config:
+        from_attributes = True
+
+class ScraperResponse(BaseModel):
+    resources: List[ResourceBase]
 
 class LoginRequest(BaseModel):
     email: str
@@ -132,3 +178,77 @@ class LoginRequest(BaseModel):
 class AIPrompt(BaseModel):
     message: str
     context: Optional[str] = None
+
+class MeetingBase(BaseModel):
+    team_id: str
+    title: str
+    transcript: Optional[str] = None
+    summary: Optional[str] = None
+    action_items: Optional[str] = None
+
+class MeetingResponse(MeetingBase):
+    id: int
+    date: datetime
+    class Config:
+        from_attributes = True
+
+class ProjectDocBase(BaseModel):
+    team_id: str
+    title: str
+    content: str
+    type: str
+
+class ProjectDocResponse(ProjectDocBase):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class HelpRequestBase(BaseModel):
+    team_id: str
+    user_id: str
+    title: str
+    description: str
+    bounty: int = 10
+
+class HelpRequestResponse(HelpRequestBase):
+    id: int
+    status: str
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class WhiteboardDataBase(BaseModel):
+    team_id: str
+    data: str
+
+class WhiteboardDataResponse(WhiteboardDataBase):
+    id: int
+    last_updated: datetime
+    class Config:
+        from_attributes = True
+
+class PresentationReviewBase(BaseModel):
+    user_id: str
+    team_id: str
+    title: str
+    review_json: str
+    score: int
+
+class PresentationReviewResponse(PresentationReviewBase):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class CodeReviewRequest(BaseModel):
+    code: str
+    language: str
+
+class RiskSimulationRequest(BaseModel):
+    team_id: str
+    hypothetical_delays: List[dict] # e.g. [{"task_id": "T1", "delay_days": 5}]
+
+class SkillMatrixResponse(BaseModel):
+    team_id: str
+    matrix: List[dict]

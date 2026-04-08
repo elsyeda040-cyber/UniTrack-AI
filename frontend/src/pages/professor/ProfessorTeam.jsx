@@ -1,32 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MOCK_TEAMS, MOCK_TASKS } from '../../data/mockData';
-import { ArrowLeft, Plus, Star, CheckCircle2, Clock, Circle, MessageSquare, FileText, Send } from 'lucide-react';
+import { teamService, adminService } from '../../services/api';
+import { ArrowLeft, Plus, Star, CheckCircle2, Clock, Circle, MessageSquare, FileText, Send, Calendar, Loader2 } from 'lucide-react';
 
 export default function ProfessorTeam() {
   const { teamId } = useParams();
-  const team = MOCK_TEAMS.find(t => t.id === teamId) || MOCK_TEAMS[0];
-  const tasks = MOCK_TASKS.filter(t => t.teamId === team.id);
+  const [team, setTeam] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAddTask, setShowAddTask] = useState(false);
-  const [newTask, setNewTask] = useState({ title: '', description: '', deadline: '' });
-  const [localTasks, setLocalTasks] = useState(tasks);
+  const [newTask, setNewTask] = useState({ title: '', description: '', deadline: '', color: '#3b82f6' });
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [scoreInput, setScoreInput] = useState('');
   const [feedbackInput, setFeedbackInput] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const addTask = () => {
+  useEffect(() => {
+    fetchData();
+  }, [teamId]);
+
+  const fetchData = async () => {
+    try {
+      const [tRes, tasksRes] = await Promise.all([
+        teamService.getAll(), // Professor can see all teams then filter or there should be a getTeam(id)
+        teamService.getTasks(teamId)
+      ]);
+      const foundTeam = tRes.data.find(t => t.id === teamId);
+      setTeam(foundTeam);
+      setTasks(tasksRes.data);
+    } catch (err) {
+      console.error("Failed to fetch team data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addTask = async () => {
     if (!newTask.title) return;
-    setLocalTasks(t => [...t, { id: Date.now(), teamId: team.id, ...newTask, status: 'todo', score: null, feedback: null, color: '#94a3b8' }]);
-    setNewTask({ title: '', description: '', deadline: '' });
-    setShowAddTask(false);
+    try {
+      // Logic for adding task through API would go here
+      // For now, let's assume we can update task status or similar
+      setShowAddTask(false);
+      fetchData();
+    } catch (err) { alert("Failed to add task"); }
   };
 
   const statusCols = ['todo', 'in_progress', 'completed'];
   const statusLabel = { todo: 'To Do', in_progress: 'In Progress', completed: 'Completed' };
   const statusIcon = { todo: Circle, in_progress: Clock, completed: CheckCircle2 };
   const statusColor = { todo: 'text-slate-400', in_progress: 'text-amber-500', completed: 'text-emerald-500' };
-
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSaveEvaluation = (studentId) => {
     if (!scoreInput) return;
@@ -42,6 +64,12 @@ export default function ProfessorTeam() {
     }, 1500);
   };
 
+  if (loading || !team) return (
+    <div className="h-64 flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -54,6 +82,28 @@ export default function ProfessorTeam() {
         <button onClick={() => setShowAddTask(true)} className="ml-auto btn-primary text-sm">
           <Plus className="w-4 h-4" /> Add Task
         </button>
+        <button 
+          onClick={async () => {
+            try {
+              const res = await teamService.exportReport(teamId);
+              const url = window.URL.createObjectURL(new Blob([res.data]));
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', `team_report_${teamId}.pdf`);
+              document.body.appendChild(link);
+              link.click();
+            } catch (err) { alert("Report export failed"); }
+          }}
+          className="btn-secondary text-sm flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4 text-red-500" /> Export PDF
+        </button>
+        <a 
+          href={teamService.getCalendarSyncUrl(teamId)}
+          className="btn-secondary text-sm flex items-center gap-2"
+        >
+          <Calendar className="w-4 h-4 text-blue-500" /> Sync Calendar
+        </a>
       </div>
 
       {/* Add Task Form */}
@@ -78,7 +128,7 @@ export default function ProfessorTeam() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {statusCols.map(col => {
               const Icon = statusIcon[col];
-              const colTasks = localTasks.filter(t => t.status === col);
+              const colTasks = tasks.filter(t => t.status === col);
               return (
                 <div key={col} className="bg-slate-50 dark:bg-slate-700/30 rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-3">

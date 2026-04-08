@@ -8,6 +8,8 @@ const titles = {
   '/admin/users': 'User Management',
   '/admin/analytics': 'System Analytics',
   '/admin/settings': 'System Settings',
+  '/admin/reports': 'Reports',
+  '/admin/activity': 'Activity Log',
 };
 
 export default function AdminLayout() {
