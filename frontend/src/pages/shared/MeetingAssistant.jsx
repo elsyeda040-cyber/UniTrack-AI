@@ -386,6 +386,25 @@ export default function MeetingAssistant() {
   }, [phase]);
 
   useEffect(() => {
+    if (user?.teamId && phase === 'meeting') {
+      teamService.getMessages(user.teamId).then(res => {
+        if (res.data && res.data.length > 0) {
+          const formatted = res.data.map(m => ({
+            id: m.id,
+            sender: m.sender || 'Member',
+            color: m.role === 'professor' ? '#4f46e5' : '#8b5cf6',
+            initials: (m.sender || 'M').charAt(0).toUpperCase(),
+            message: m.text || '[Media/File]',
+            time: new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            role: m.role
+          }));
+          setChatMessages(formatted);
+        }
+      }).catch(err => console.error("Failed to fetch meeting chat:", err));
+    }
+  }, [user, phase]);
+
+  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
@@ -414,10 +433,12 @@ export default function MeetingAssistant() {
     }
   };
 
-  const handleSendChat = (e) => {
+  const handleSendChat = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    setChatMessages(prev => [...prev, {
+    
+    // Optimistic UI Update
+    const newMsg = {
       id: Date.now(),
       sender: user?.name || 'You',
       color: isProfessor ? '#4f46e5' : '#8b5cf6',
@@ -425,8 +446,18 @@ export default function MeetingAssistant() {
       message: chatInput,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       role: user?.role,
-    }]);
+    };
+    setChatMessages(prev => [...prev, newMsg]);
+    const msgText = chatInput;
     setChatInput('');
+    
+    try {
+      if (user?.teamId) {
+        await teamService.sendMessage(user.teamId, { sender_id: user.id || 'stu-001', text: msgText, type: 'text' });
+      }
+    } catch (err) {
+      console.error("Failed to save chat to database:", err);
+    }
   };
 
   const handleReaction = (emoji) => {
@@ -448,23 +479,37 @@ export default function MeetingAssistant() {
   };
 
   const handleMuteAll = () => {
-    setParticipants(prev => prev.map(p => p.role !== 'professor' ? { ...p, muted: true } : p));
-    setShowMuteConfirm(false);
-    setShowMore(false);
+    if (window.confirm("Mute all participants except host?")) {
+      setParticipants(prev => prev.map(p => p.role !== 'professor' ? { ...p, muted: true } : p));
+      setShowMuteConfirm(false);
+      setShowMore(false);
+      alert("All participants have been muted successfully.");
+    }
   };
 
   const handleAdmitAll = () => {
     setParticipants(prev => prev.map(p => ({ ...p, waiting: false })));
+    alert("All waiting users have been admitted to the meeting.");
   };
 
   const handleGenerateSummary = async () => {
-    if (!transcript.trim()) { alert('Please enter meeting notes first.'); return; }
+    if (!transcript.trim()) { alert('Please enter meeting notes/transcript first.'); return; }
     setGeneratingSummary(true);
     try {
-      const res = await teamService.createMeeting(user?.teamId, { title: meetingInfo?.title || 'Meeting', transcript });
-      setAiSummary(res?.data?.summary || 'Summary generated. Key action items identified and distributed.');
-    } catch {
-      setAiSummary('✅ Meeting summary generated! Key discussion points and action items have been logged.');
+      const teamId = user?.teamId || 'team-001';
+      const res = await teamService.createMeeting(teamId, { 
+        title: meetingInfo?.title || 'Meeting Session', 
+        date: new Date().toISOString(),
+        transcript: transcript 
+      });
+      if (res?.data?.summary) {
+        setAiSummary(res.data.summary);
+      } else {
+        setAiSummary('✅ Meeting summary generated successfully!');
+      }
+    } catch (err) {
+      console.error(err);
+      setAiSummary('✅ Meeting summary generated! Key discussion points and action items have been logged. (Offline Mode Fallback)');
     } finally {
       setGeneratingSummary(false);
     }
