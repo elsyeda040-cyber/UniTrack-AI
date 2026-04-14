@@ -605,6 +605,40 @@ def clear_chat_notifications(user_id: str, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success"}
 
+# Meeting Endpoints
+@app.get("/teams/{team_id}/meetings", response_model=List[schemas.MeetingResponse])
+def get_meetings(team_id: str, db: Session = Depends(get_db)):
+    return db.query(models.Meeting).filter(models.Meeting.team_id == team_id).all()
+
+@app.post("/teams/{team_id}/meetings", response_model=schemas.MeetingResponse)
+def create_meeting(team_id: str, meeting: dict, db: Session = Depends(get_db)):
+    title = meeting.get("title", "Meeting Session")
+    transcript = meeting.get("transcript", "")
+    
+    # Generate summary with Gemini if transcript exists
+    summary_text = "No summary available."
+    if transcript and genai:
+        try:
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            prompt = f"قم بتلخيص نص الاجتماع التالي باللغة العربية، واستخرج أهم النقاط والقرارات والمهام المطلوبة بوضوح:\n\n{transcript}"
+            response = model.generate_content(prompt)
+            summary_text = response.text
+        except Exception as e:
+            print(f"Meeting AI Summary Error: {e}")
+            summary_text = f"تم حفظ نص الاجتماع بنجاح، لكن تعذر توليد ملخص الآن ({e})."
+            
+    db_meeting = models.Meeting(
+        team_id=team_id,
+        title=title,
+        transcript=transcript,
+        summary=summary_text,
+        date=datetime.now()
+    )
+    db.add(db_meeting)
+    db.commit()
+    db.refresh(db_meeting)
+    return db_meeting
+
 # Team Endpoints
 @app.get("/teams", response_model=List[schemas.TeamResponse])
 def get_all_teams(db: Session = Depends(get_db)):
