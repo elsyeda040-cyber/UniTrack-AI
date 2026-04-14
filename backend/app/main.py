@@ -81,8 +81,14 @@ async def ai_chat(prompt: schemas.AIPrompt):
 async def startup_seed():
     try:
         from app.database import SessionLocal
-        # Make sure tables exist first
+        from sqlalchemy import text
+        
+        # ── Step 1: Run migrations to add any missing columns ──
+        _run_migrations()
+        
+        # ── Step 2: Make sure all tables exist ──
         models.Base.metadata.create_all(bind=engine)
+        
         db = SessionLocal()
         user_count = db.query(models.User).count()
         print(f"[STARTUP] Database check: {user_count} users found.")
@@ -99,16 +105,38 @@ async def startup_seed():
         print(f"[STARTUP] Seeding error (non-fatal): {e}")
         print(traceback.format_exc())
 
-@app.post("/admin/seed-db")
-def manual_seed(secret: str = "", db: Session = Depends(get_db)):
-    """Emergency endpoint to manually reseed the database on Railway."""
-    if secret != "unitrack2024":
-        raise HTTPException(status_code=403, detail="Forbidden")
+def _run_migrations():
+    """Add missing columns to existing PostgreSQL tables without losing data."""
     try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            # Add missing columns to users table
+            migrations = [
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 100",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS skills VARCHAR",
+                # Add any other missing columns here as the schema evolves
+            ]
+            for migration in migrations:
+                try:
+                    conn.execute(text(migration))
+                    conn.commit()
+                    print(f"[MIGRATION] OK: {migration[:60]}...")
+                except Exception as e:
+                    print(f"[MIGRATION] Skipped (already exists?): {e}")
+    except Exception as e:
+        print(f"[MIGRATION] Migration error (non-fatal): {e}")
+
+@app.get("/admin/seed-db")
+def manual_seed(secret: str = "", db: Session = Depends(get_db)):
+    """Emergency endpoint to manually reseed the database on Railway (GET for browser use)."""
+    if secret != "unitrack2024":
+        raise HTTPException(status_code=403, detail="Forbidden - add ?secret=unitrack2024")
+    try:
+        _run_migrations()
+        models.Base.metadata.create_all(bind=engine)
         user_count = db.query(models.User).count()
         if user_count > 0:
-            return {"status": "already_seeded", "users": user_count}
-        models.Base.metadata.create_all(bind=engine)
+            return {"status": "already_seeded", "users": user_count, "message": "DB already has data"}
         _seed_database(db)
         return {"status": "seeded", "users": db.query(models.User).count()}
     except Exception as e:
