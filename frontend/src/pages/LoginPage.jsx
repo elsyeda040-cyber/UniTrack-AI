@@ -33,12 +33,7 @@ export default function LoginPage() {
       const user = await login(email, password);
       navigate(`/${user.role}`);
     } catch (err) {
-      let errorMsg = err.message || "Invalid credentials";
-      // Advanced error display
-      if (err.response && err.response.data) {
-        errorMsg += " | Backend says: " + JSON.stringify(err.response.data);
-      }
-      setError(errorMsg);
+      setError(err.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }

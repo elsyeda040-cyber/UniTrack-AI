@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
+import io
+import json
 import logging
 import random
 import uuid
@@ -79,17 +81,50 @@ async def ai_chat(prompt: schemas.AIPrompt):
 async def startup_seed():
     try:
         from app.database import SessionLocal
+        # Make sure tables exist first
+        models.Base.metadata.create_all(bind=engine)
         db = SessionLocal()
+        user_count = db.query(models.User).count()
+        print(f"[STARTUP] Database check: {user_count} users found.")
         # Only seed if no users exist
-        if db.query(models.User).count() == 0:
-            print("Database is empty. Seeding initial data...")
+        if user_count == 0:
+            print("[STARTUP] Database is empty. Seeding initial data...")
             _seed_database(db)
-            print("Database seeded successfully!")
+            print(f"[STARTUP] Database seeded! Now has {db.query(models.User).count()} users.")
         else:
-            print(f"Database already has {db.query(models.User).count()} users. Skipping seed.")
+            print(f"[STARTUP] Database already has {user_count} users. Skipping seed.")
         db.close()
     except Exception as e:
-        print(f"Seeding error (non-fatal): {e}")
+        import traceback
+        print(f"[STARTUP] Seeding error (non-fatal): {e}")
+        print(traceback.format_exc())
+
+@app.post("/admin/seed-db")
+def manual_seed(secret: str = "", db: Session = Depends(get_db)):
+    """Emergency endpoint to manually reseed the database on Railway."""
+    if secret != "unitrack2024":
+        raise HTTPException(status_code=403, detail="Forbidden")
+    try:
+        user_count = db.query(models.User).count()
+        if user_count > 0:
+            return {"status": "already_seeded", "users": user_count}
+        models.Base.metadata.create_all(bind=engine)
+        _seed_database(db)
+        return {"status": "seeded", "users": db.query(models.User).count()}
+    except Exception as e:
+        import traceback
+        return {"status": "error", "detail": str(e), "trace": traceback.format_exc()}
+
+@app.get("/admin/db-status")
+def db_status(db: Session = Depends(get_db)):
+    """Check database status - useful for Railway debugging."""
+    try:
+        users = db.query(models.User).count()
+        teams = db.query(models.Team).count()
+        tasks = db.query(models.Task).count()
+        return {"status": "ok", "users": users, "teams": teams, "tasks": tasks}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
 
 def _seed_database(db):
     import datetime

@@ -85,9 +85,7 @@ export const AppProvider = ({ children }) => {
       setUser(res.data);
       return res.data;
     } catch (err) {
-      console.error("Full Login Error:", err);
-      // throw the actual err so the login page can read err.response
-      throw err;
+      throw new Error(err.response?.data?.detail || "Login failed");
     } finally {
       setLoading(false);
     }
