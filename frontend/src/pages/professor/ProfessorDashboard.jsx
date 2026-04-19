@@ -8,6 +8,7 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 export default function ProfessorDashboard() {
   const { user } = useApp();
   const [teams, setTeams] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [selectedFeedbackTeam, setSelectedFeedbackTeam] = useState(null);
@@ -15,15 +16,18 @@ export default function ProfessorDashboard() {
 
   useEffect(() => {
     if (user?.id) {
-      fetchTeams();
+      fetchData();
     }
   }, [user]);
 
-  const fetchTeams = async () => {
+  const fetchData = async () => {
     try {
-      const res = await professorService.getTeams(user.id);
-      // Map API response to UI model if fields differ
-      const mappedTeams = res.data.map(t => ({
+      const [teamsRes, tasksRes] = await Promise.all([
+        professorService.getTeams(user.id),
+        professorService.getTasks(user.id)
+      ]);
+      
+      const mappedTeams = teamsRes.data.map(t => ({
         id: t.id,
         name: t.name,
         projectTitle: t.project_title,
@@ -32,9 +36,11 @@ export default function ProfessorDashboard() {
         emoji: t.emoji,
         studentsCount: t.students?.length || 0
       }));
+
       setTeams(mappedTeams);
+      setTasks(tasksRes.data);
     } catch (err) {
-      console.error("Failed to fetch professor teams", err);
+      console.error("Failed to fetch professor dashboard data", err);
     } finally {
       setLoading(false);
     }
@@ -60,14 +66,18 @@ export default function ProfessorDashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { icon: Users, label: 'Total Students', value: teams.reduce((s, t) => s + (t.studentsCount || 0), 0), color: 'bg-purple-500' },
-          { icon: CheckCircle2, label: 'Tasks Created', value: 18, color: 'bg-emerald-500' },
-          { icon: Clock, label: 'Avg Progress', value: `${Math.round(teams.reduce((s, t) => s + t.progress, 0) / (teams.length || 1))}%`, color: 'bg-amber-500' },
-          { icon: Sparkles, label: 'AI Insights', value: '3 Active', color: 'bg-indigo-600' },
+          { icon: Users, label: 'Total Students', value: teams.reduce((s, t) => s + (t.studentsCount || 0), 0), color: 'bg-purple-500', path: '/professor/teams' },
+          { icon: CheckCircle2, label: 'Tasks (Supervised)', value: tasks.length, color: 'bg-emerald-500', path: '/professor/tasks' },
+          { icon: Clock, label: 'Avg Progress', value: `${teams.length ? Math.round(teams.reduce((s, t) => s + t.progress, 0) / teams.length) : 0}%`, color: 'bg-amber-500', path: '/professor/analytics' },
+          { icon: Sparkles, label: 'AI Health', value: teams.length > 0 ? 'Healthy' : 'N/A', color: 'bg-indigo-600', path: '/professor/analytics' },
         ].map(s => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="card flex items-center gap-3">
+            <div 
+              key={s.label} 
+              onClick={() => navigate(s.path)}
+              className="card flex items-center gap-3 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+            >
               <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center`}>
                 <Icon className="w-5 h-5 text-white" />
               </div>
@@ -103,22 +113,31 @@ export default function ProfessorDashboard() {
             <span className="bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold px-2 py-1 rounded">Next 7 Days</span>
           </div>
           <div className="space-y-3 flex-1 overflow-y-auto max-h-[220px] scrollbar-none">
-            {[
-              { title: "Frontend Architecture", team: "Alpha Devs", date: "Tomorrow, 11:59 PM", color: "bg-red-500" },
-              { title: "Database Schema", team: "Beta Coders", date: "In 2 days", color: "bg-amber-500" },
-              { title: "User Auth Module", team: "Gamma Tech", date: "In 4 days", color: "bg-blue-500" }
-            ].map((task, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <div className={`w-2 h-10 rounded-full ${task.color}`}></div>
-                <div className="flex-1">
-                  <p className="font-bold text-sm text-slate-800 dark:text-white">{task.title}</p>
-                  <p className="text-xs text-slate-500">{task.team}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{task.date}</p>
-                </div>
-              </div>
-            ))}
+            {tasks.length > 0 ? (
+               tasks.slice(0, 5).sort((a,b) => new Date(a.deadline) - new Date(b.deadline)).map((task, idx) => {
+                  const team = teams.find(t => t.id === task.team_id);
+                  return (
+                    <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                      <div className={`w-2 h-10 rounded-full ${task.color || 'bg-slate-300'}`}></div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm text-slate-800 dark:text-white truncate">{task.title}</p>
+                        <p className="text-xs text-slate-500 truncate">{team?.name || 'Unknown'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{task.deadline}</p>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${task.status === 'completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                          {task.status}
+                        </span>
+                      </div>
+                    </div>
+                  );
+               })
+            ) : (
+               <div className="h-40 flex flex-col items-center justify-center text-slate-400 gap-2">
+                  <Clock className="w-8 h-8 opacity-20" />
+                  <p className="text-sm">No upcoming deadlines</p>
+               </div>
+            )}
           </div>
         </div>
 
@@ -133,12 +152,12 @@ export default function ProfessorDashboard() {
           <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="70%" data={[
-                { subject: 'Frontend', A: 85, B: 65, fullMark: 100 },
-                { subject: 'Backend', A: 70, B: 85, fullMark: 100 },
-                { subject: 'UI/UX', A: 90, B: 60, fullMark: 100 },
-                { subject: 'AI/ML', A: 40, B: 95, fullMark: 100 },
-                { subject: 'DevOps', A: 60, B: 75, fullMark: 100 },
-                { subject: 'Testing', A: 75, B: 80, fullMark: 100 },
+                { subject: 'Frontend', A: 0, B: 0, fullMark: 100 },
+                { subject: 'Backend', A: 0, B: 0, fullMark: 100 },
+                { subject: 'UI/UX', A: 0, B: 0, fullMark: 100 },
+                { subject: 'AI/ML', A: 0, B: 0, fullMark: 100 },
+                { subject: 'DevOps', A: 0, B: 0, fullMark: 100 },
+                { subject: 'Testing', A: 0, B: 0, fullMark: 100 },
               ]}>
                 <PolarGrid stroke="#e2e8f0" />
                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10 }} />

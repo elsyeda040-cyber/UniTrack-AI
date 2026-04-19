@@ -1,42 +1,133 @@
-import React from 'react';
-import { MOCK_TEAMS, PROGRESS_HISTORY } from '../../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { professorService } from '../../services/api';
+import { useApp } from '../../context/AppContext';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
-import { TrendingUp, Users, CheckCircle2, AlertTriangle, FileDown } from 'lucide-react';
-
-const teamProgressData = MOCK_TEAMS.map(t => ({ name: t.name, progress: t.progress, students: t.students.length }));
+import { TrendingUp, Users, CheckCircle2, AlertTriangle, FileDown, Loader2 } from 'lucide-react';
 
 export default function ProfessorAnalytics() {
+  const { user } = useApp();
+  const navigate = useNavigate();
+  const [analytics, setAnalytics] = useState(null);
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchData();
+    }
+  }, [user]);
+
+  const fetchData = async () => {
+    try {
+      const [analyticsRes, teamsRes] = await Promise.all([
+        professorService.getAnalytics(user.id),
+        professorService.getTeams(user.id)
+      ]);
+      setAnalytics(analyticsRes.data);
+      setTeams(teamsRes.data);
+    } catch (err) {
+      console.error("Failed to fetch analytics data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await professorService.exportGlobalReport(user.id);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `professor_report_${user.id}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Export failed", err);
+      alert("Failed to export report.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  if (loading) return (
+    <div className="h-64 flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-800 dark:text-white">Teams Analytics</h2>
-        <button className="btn-primary text-sm"><FileDown className="w-4 h-4" /> Export Report</button>
+        <button 
+          onClick={handleExport}
+          disabled={exporting}
+          className="btn-primary text-sm flex items-center gap-2"
+        >
+          {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+          Export CSV Report
+        </button>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { icon: Users, label: 'Total Students', value: MOCK_TEAMS.reduce((s,t) => s + t.students.length, 0), color: 'bg-purple-500' },
-          { icon: CheckCircle2, label: 'Avg Progress', value: `${Math.round(MOCK_TEAMS.reduce((s,t) => s + t.progress, 0) / MOCK_TEAMS.length)}%`, color: 'bg-emerald-500' },
-          { icon: TrendingUp, label: 'Best Team', value: MOCK_TEAMS.sort((a,b) => b.progress - a.progress)[0].name.split(' ')[1], color: 'bg-blue-500' },
-          { icon: AlertTriangle, label: 'Needs Attention', value: MOCK_TEAMS.filter(t => t.progress < 50).length, color: 'bg-amber-500' },
+          { 
+            icon: Users, 
+            label: 'Total Students', 
+            value: analytics.total_students, 
+            color: 'bg-purple-500',
+            onClick: () => navigate('/professor/teams')
+          },
+          { 
+            icon: CheckCircle2, 
+            label: 'Avg Progress', 
+            value: `${Math.round(analytics.avg_progress)}%`, 
+            color: 'bg-emerald-500',
+            onClick: () => {
+              const el = document.getElementById('charts-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }
+          },
+          { 
+            icon: TrendingUp, 
+            label: 'Best Team', 
+            value: analytics.best_team_name.split(' ')[0], 
+            color: 'bg-blue-500',
+            onClick: () => navigate(`/professor/team/${analytics.best_team_id}`)
+          },
+          { 
+            icon: AlertTriangle, 
+            label: 'Needs Attention', 
+            value: analytics.needs_attention_count, 
+            color: 'bg-amber-500',
+            onClick: () => navigate('/professor/grades')
+          },
         ].map(s => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="card flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center flex-shrink-0`}><Icon className="w-5 h-5 text-white" /></div>
-              <div><p className="text-xl font-bold text-slate-800 dark:text-white">{s.value}</p><p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p></div>
+            <div 
+              key={s.label} 
+              onClick={s.onClick}
+              className="card flex items-center gap-3 cursor-pointer hover:scale-105 hover:shadow-xl transition-all duration-300 group"
+            >
+              <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center flex-shrink-0 group-hover:rotate-12 transition-transform`}><Icon className="w-5 h-5 text-white" /></div>
+              <div><p className="text-xl font-bold text-slate-800 dark:text-white uppercase tracking-tighter">{s.value}</p><p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{s.label}</p></div>
             </div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div id="charts-section" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Team Progress Bar */}
         <div className="card">
           <h3 className="font-bold text-slate-800 dark:text-white mb-4">Team Progress Comparison</h3>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={teamProgressData} barSize={40}>
+            <BarChart data={analytics.team_progress_comparison} barSize={40}>
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} domain={[0, 100]} />
               <Tooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
@@ -49,7 +140,7 @@ export default function ProfessorAnalytics() {
         <div className="card">
           <h3 className="font-bold text-slate-800 dark:text-white mb-4">Overall Progress Timeline</h3>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={PROGRESS_HISTORY}>
+            <LineChart data={analytics.overall_progress_timeline}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} domain={[0, 100]} />
@@ -73,11 +164,15 @@ export default function ProfessorAnalytics() {
               <th className="pb-3 font-semibold">Status</th>
             </tr></thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-              {MOCK_TEAMS.map(t => (
-                <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                  <td className="py-3 font-semibold text-slate-700 dark:text-slate-200">{t.emoji} {t.name}</td>
-                  <td className="py-3 text-slate-500 dark:text-slate-400">{t.projectTitle}</td>
-                  <td className="py-3 text-slate-700 dark:text-slate-200">{t.students.length}</td>
+              {teams.map(t => (
+                <tr 
+                  key={t.id} 
+                  onClick={() => navigate(`/professor/team/${t.id}`)}
+                  className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors cursor-pointer group"
+                >
+                  <td className="py-3 font-semibold text-slate-700 dark:text-slate-200 group-hover:text-purple-600 transition-colors">{t.emoji} {t.name}</td>
+                  <td className="py-3 text-slate-500 dark:text-slate-400">{t.project_title}</td>
+                  <td className="py-3 text-slate-700 dark:text-slate-200">{t.students?.length || 0}</td>
                   <td className="py-3 w-32">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 progress-bar"><div className="progress-fill" style={{ width: `${t.progress}%`, background: t.color }} /></div>

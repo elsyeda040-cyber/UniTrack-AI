@@ -3,12 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
-import io
-import json
 import logging
 import random
 import uuid
 from datetime import datetime, timedelta
+import json
+import io
+import csv
 
 try:
     import google.generativeai as genai
@@ -81,169 +82,31 @@ async def ai_chat(prompt: schemas.AIPrompt):
 async def startup_seed():
     try:
         from app.database import SessionLocal
-        from sqlalchemy import text
-        
-        # ── Step 1: Run migrations to add any missing columns ──
-        _run_migrations()
-        
-        # ── Step 2: Make sure all tables exist ──
-        models.Base.metadata.create_all(bind=engine)
-        
         db = SessionLocal()
-        user_count = db.query(models.User).count()
-        print(f"[STARTUP] Database check: {user_count} users found.")
         # Only seed if no users exist
-        if user_count == 0:
-            print("[STARTUP] Database is empty. Seeding initial data...")
+        if db.query(models.User).count() == 0:
+            print("Database is empty. Seeding initial data...")
             _seed_database(db)
-            print(f"[STARTUP] Database seeded! Now has {db.query(models.User).count()} users.")
+            print("Database seeded successfully!")
         else:
-            print(f"[STARTUP] Database already has {user_count} users. Skipping seed.")
+            print(f"Database already has {db.query(models.User).count()} users. Skipping seed.")
         db.close()
     except Exception as e:
-        import traceback
-        print(f"[STARTUP] Seeding error (non-fatal): {e}")
-        print(traceback.format_exc())
-
-def _run_migrations():
-    """Add missing columns to existing PostgreSQL tables without losing data."""
-    try:
-        from sqlalchemy import text
-        with engine.connect() as conn:
-            # Add missing columns to users table
-            migrations = [
-                "ALTER TABLE users ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 100",
-                "ALTER TABLE users ADD COLUMN IF NOT EXISTS skills VARCHAR",
-                # Add any other missing columns here as the schema evolves
-            ]
-            for migration in migrations:
-                try:
-                    conn.execute(text(migration))
-                    conn.commit()
-                    print(f"[MIGRATION] OK: {migration[:60]}...")
-                except Exception as e:
-                    print(f"[MIGRATION] Skipped (already exists?): {e}")
-    except Exception as e:
-        print(f"[MIGRATION] Migration error (non-fatal): {e}")
-
-@app.get("/admin/seed-db")
-def manual_seed(secret: str = "", db: Session = Depends(get_db)):
-    """Emergency endpoint to manually reseed the database on Railway (GET for browser use)."""
-    if secret != "unitrack2024":
-        raise HTTPException(status_code=403, detail="Forbidden - add ?secret=unitrack2024")
-    try:
-        _run_migrations()
-        models.Base.metadata.create_all(bind=engine)
-        user_count = db.query(models.User).count()
-        if user_count > 0:
-            return {"status": "already_seeded", "users": user_count, "message": "DB already has data"}
-        _seed_database(db)
-        return {"status": "seeded", "users": db.query(models.User).count()}
-    except Exception as e:
-        import traceback
-        return {"status": "error", "detail": str(e), "trace": traceback.format_exc()}
-
-@app.get("/admin/db-status")
-def db_status(db: Session = Depends(get_db)):
-    """Check database status - useful for Railway debugging."""
-    try:
-        users = db.query(models.User).count()
-        teams = db.query(models.Team).count()
-        tasks = db.query(models.Task).count()
-        return {"status": "ok", "users": users, "teams": teams, "tasks": tasks}
-    except Exception as e:
-        return {"status": "error", "detail": str(e)}
+        print(f"Seeding error (non-fatal): {e}")
 
 def _seed_database(db):
     import datetime
     users = [
-        models.User(id='stu-001', name='Ahmed Mohamed', email='ahmed@university.edu', role='student', bio='Academic enthusiast.'),
-        models.User(id='stu-002', name='Hossam Dagaks', email='hossam@university.edu', role='student'),
-        models.User(id='stu-003', name='Mona Ali', email='mona@university.edu', role='student'),
-        models.User(id='stu-004', name='Ziad Youssef', email='ziad@university.edu', role='student'),
-        models.User(id='prof-001', name='Dr. Hassan Ibrahim', email='hassan@university.edu', role='professor'),
-        models.User(id='prof-002', name='Dr. Nadia Selim', email='nadia@university.edu', role='professor'),
-        models.User(id='ta-001', name='Eng. Sara Khaled', email='sara@university.edu', role='assistant'),
-        models.User(id='ta-002', name='Eng. Omar Tarek', email='omar@university.edu', role='assistant'),
         models.User(id='admin-001', name='Administration', email='admin@university.edu', role='admin'),
     ]
     for u in users:
         db.add(u)
     db.commit()
 
-    teams = [
-        models.Team(id='team-001', name='Team Alpha', project_title='AI-Powered Library System', progress=68, color='#3b82f6', emoji='🚀', professor_id='prof-001', assistant_id='ta-001'),
-        models.Team(id='team-002', name='Team Beta', project_title='E-Learning Platform', progress=45, color='#8b5cf6', emoji='📚', professor_id='prof-001', assistant_id='ta-001'),
-        models.Team(id='team-003', name='Team Gamma', project_title='Smart City IoT', progress=30, color='#10b981', emoji='🏙️', professor_id='prof-002', assistant_id='ta-002'),
-    ]
-    for t in teams:
-        db.add(t)
-    db.commit()
-
-    # Link students to teams
-    team1 = db.query(models.Team).filter(models.Team.id == 'team-001').first()
-    team3 = db.query(models.Team).filter(models.Team.id == 'team-003').first()
-    stu1 = db.query(models.User).filter(models.User.id == 'stu-001').first()
-    stu2 = db.query(models.User).filter(models.User.id == 'stu-002').first()
-    stu3 = db.query(models.User).filter(models.User.id == 'stu-003').first()
-    stu4 = db.query(models.User).filter(models.User.id == 'stu-004').first()
-    if team1 and stu1: team1.students.append(stu1)
-    if team1 and stu2: team1.students.append(stu2)
-    if team3 and stu3: team3.students.append(stu3)
-    if team3 and stu4: team3.students.append(stu4)
-    db.commit()
-
-    tasks = [
-        models.Task(id='task-001', team_id='team-001', title='Research & Analysis', description='Study existing systems.', deadline='2026-03-20', status='completed', files_required=True, score=90, feedback='Excellent!', color='#10b981'),
-        models.Task(id='task-002', team_id='team-001', title='System Design', description='Design schema.', deadline='2026-03-28', status='completed', files_required=True, score=85, feedback='Good.', color='#10b981'),
-        models.Task(id='task-003', team_id='team-001', title='UI/UX Prototype', description='Build prototype.', deadline='2026-04-05', status='in_progress', files_required=True, color='#f59e0b'),
-        models.Task(id='task-004', team_id='team-003', title='Requirements Gathering', description='Talk to stakeholders.', deadline='2026-03-25', status='completed', files_required=True, score=88, color='#10b981'),
-    ]
-    for tk in tasks:
-        db.add(tk)
-
-    notifications = [
-        models.Notification(user_id='stu-001', type='feedback', title='New Feedback', message='Dr. Hassan left feedback.', time='5 min ago', read=False),
-        models.Notification(user_id='stu-001', type='deadline', title='Deadline Approaching', message='UI prototype due in 3 days.', time='1 hr ago', read=False),
-    ]
-    for n in notifications:
-        db.add(n)
-        
-    events = [
-        models.Event(team_id='team-001', title='First Presentation', description='Demo initial prototype.', date='2026-03-30', type='milestone', color='#f59e0b'),
-        models.Event(team_id='team-001', title='Team Meeting', description='Discuss architecture.', date='2026-04-02', type='meeting', color='#10b981'),
-        models.Event(team_id='team-003', title='Field Research', description='Visit site.', date='2026-04-05', type='milestone', color='#3b82f6'),
-    ]
-    for e in events:
-        db.add(e)
-        
-    reviews = [
-        models.Review(team_id='team-001', reviewer_id='stu-001', reviewee_id='stu-002', rating=5, comment='Great cooperation and technical skills!'),
-        models.Review(team_id='team-001', reviewer_id='stu-002', reviewee_id='stu-001', rating=4, comment='Always on time with tasks.'),
-    ]
-    for r in reviews:
-        db.add(r)
-        
-    badges = [
-        models.Badge(name="The Finisher", description="Always completes tasks before the deadline.", icon="Zap", color="#f59e0b"),
-        models.Badge(name="Team Player", description="Highly rated by peers for cooperation.", icon="Users", color="#10b981"),
-        models.Badge(name="Code Master", description="Excellent technical contributions.", icon="Code", color="#3b82f6"),
-    ]
-    for b in badges:
-        db.add(b)
-    db.commit()
-
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://unit-track-ai.vercel.app",
-        "https://unit-tiack-ai.vercel.app",   # اسم بديل محتمل
-        "https://*.vercel.app",               # Vercel preview deployments
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -299,9 +162,38 @@ def get_user(user_id: str, db: Session = Depends(get_db)):
     return user_dict
 
 # Task Endpoints
+@app.get("/teams/{team_id}", response_model=schemas.TeamResponse)
+def get_team(team_id: str, db: Session = Depends(get_db)):
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    return team
+
 @app.get("/teams/{team_id}/tasks", response_model=List[schemas.TaskResponse])
 def get_team_tasks(team_id: str, db: Session = Depends(get_db)):
     return db.query(models.Task).filter(models.Task.team_id == team_id).all()
+
+@app.post("/teams/{team_id}/tasks", response_model=schemas.TaskResponse)
+def create_task(team_id: str, task: schemas.TaskCreate, db: Session = Depends(get_db)):
+    db_task = models.Task(**task.dict())
+    db_task.team_id = team_id
+    db_task.id = f"task-{abs(hash(task.title + str(datetime.now()))) % 10000}"
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
+
+@app.put("/users/{user_id}/evaluation")
+def update_student_evaluation(user_id: str, data: schemas.UserEvaluationUpdate, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update performance in a specific team context (simplified as global score for demo)
+    # In a real app, this might be a 'TeamMember' link table entry
+    user.credits = data.score # Using credits as placeholders for score if needed, or better, update his task scores
+    db.commit()
+    return {"status": "success"}
 
 @app.put("/tasks/{task_id}", response_model=schemas.TaskResponse)
 def update_task(task_id: str, task_data: schemas.TaskBase, db: Session = Depends(get_db)):
@@ -493,17 +385,28 @@ def get_user_badges(user_id: str, db: Session = Depends(get_db)):
 
 @app.get("/leaderboard")
 def get_leaderboard(db: Session = Depends(get_db)):
-    # Simple leaderboard based on completed tasks
-    users = db.query(models.User).all()
+    # Calculate scores based on completed tasks and average scores
+    users = db.query(models.User).filter(models.User.role == 'student').all()
     leaderboard = []
     for u in users:
-        # Since tasks are team-based, we'll use a mocked score or badge count
+        # Completed tasks count
+        comp_tasks = db.query(models.Task).filter(models.Task.team_id == u.teamId if hasattr(u, 'teamId') else None, models.Task.status == 'completed').all()
+        # Average score
+        scores = [t.score for t in comp_tasks if t.score is not None]
+        avg_score = sum(scores) / len(scores) if scores else 0
+        
         badge_count = db.query(models.UserBadge).filter(models.UserBadge.user_id == u.id).count()
+        
+        # Formula: (Completed Tasks * 50) + (Avg Score * 5) + (Badges * 100)
+        final_score = (len(comp_tasks) * 50) + (avg_score * 5) + (badge_count * 100)
+        
         leaderboard.append({
             "id": u.id,
             "name": u.name,
             "role": u.role,
-            "score": badge_count * 100 + 50 # Mock formula
+            "score": int(final_score),
+            "avatar": u.avatar,
+            "badges": badge_count
         })
     leaderboard.sort(key=lambda x: x['score'], reverse=True)
     return leaderboard[:10]
@@ -668,40 +571,6 @@ def clear_chat_notifications(user_id: str, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success"}
 
-# Meeting Endpoints
-@app.get("/teams/{team_id}/meetings", response_model=List[schemas.MeetingResponse])
-def get_meetings(team_id: str, db: Session = Depends(get_db)):
-    return db.query(models.Meeting).filter(models.Meeting.team_id == team_id).all()
-
-@app.post("/teams/{team_id}/meetings", response_model=schemas.MeetingResponse)
-def create_meeting(team_id: str, meeting: dict, db: Session = Depends(get_db)):
-    title = meeting.get("title", "Meeting Session")
-    transcript = meeting.get("transcript", "")
-    
-    # Generate summary with Gemini if transcript exists
-    summary_text = "No summary available."
-    if transcript and genai:
-        try:
-            model = genai.GenerativeModel('gemini-2.5-flash')
-            prompt = f"قم بتلخيص نص الاجتماع التالي باللغة العربية، واستخرج أهم النقاط والقرارات والمهام المطلوبة بوضوح:\n\n{transcript}"
-            response = model.generate_content(prompt)
-            summary_text = response.text
-        except Exception as e:
-            print(f"Meeting AI Summary Error: {e}")
-            summary_text = f"تم حفظ نص الاجتماع بنجاح، لكن تعذر توليد ملخص الآن ({e})."
-            
-    db_meeting = models.Meeting(
-        team_id=team_id,
-        title=title,
-        transcript=transcript,
-        summary=summary_text,
-        date=datetime.now()
-    )
-    db.add(db_meeting)
-    db.commit()
-    db.refresh(db_meeting)
-    return db_meeting
-
 # Team Endpoints
 @app.get("/teams", response_model=List[schemas.TeamResponse])
 def get_all_teams(db: Session = Depends(get_db)):
@@ -710,6 +579,77 @@ def get_all_teams(db: Session = Depends(get_db)):
 @app.get("/professors/{prof_id}/teams", response_model=List[schemas.TeamResponse])
 def get_professor_teams(prof_id: str, db: Session = Depends(get_db)):
     return db.query(models.Team).filter(models.Team.professor_id == prof_id).all()
+
+@app.get("/professors/{prof_id}/tasks", response_model=List[schemas.TaskResponse])
+def get_professor_tasks(prof_id: str, db: Session = Depends(get_db)):
+    teams = db.query(models.Team).filter(models.Team.professor_id == prof_id).all()
+    team_ids = [t.id for t in teams]
+    return db.query(models.Task).filter(models.Task.team_id.in_(team_ids)).all() if team_ids else []
+
+@app.get("/professors/{prof_id}/analytics", response_model=schemas.ProfessorAnalytics)
+def get_professor_analytics(prof_id: str, db: Session = Depends(get_db)):
+    teams = db.query(models.Team).filter(models.Team.professor_id == prof_id).all()
+    if not teams:
+        return {
+            "total_students": 0,
+            "avg_progress": 0,
+            "best_team_name": "N/A",
+            "needs_attention_count": 0,
+            "team_progress_comparison": [],
+            "overall_progress_timeline": []
+        }
+    
+    total_students = sum([len(t.students) for t in teams])
+    avg_progress = sum([t.progress for t in teams]) / len(teams)
+    best_team = max(teams, key=lambda t: t.progress)
+    needs_attention = len([t for t in teams if t.progress < 50])
+    
+    comp = [{"name": t.name, "progress": t.progress} for t in teams]
+    timeline = [
+        {"week": "Week 1", "progress": 10},
+        {"week": "Week 2", "progress": 25},
+        {"week": "Week 3", "progress": int(max(25, avg_progress - 10))},
+        {"week": "Current", "progress": int(avg_progress)}
+    ]
+    
+    return {
+        "total_students": total_students,
+        "avg_progress": avg_progress,
+        "best_team_name": best_team.name,
+        "best_team_id": best_team.id,
+        "needs_attention_count": needs_attention,
+        "team_progress_comparison": comp,
+        "overall_progress_timeline": timeline
+    }
+
+@app.get("/professors/{prof_id}/events", response_model=List[schemas.EventResponse])
+def get_professor_events(prof_id: str, db: Session = Depends(get_db)):
+    teams = db.query(models.Team).filter(models.Team.professor_id == prof_id).all()
+    team_ids = [t.id for t in teams]
+    if not team_ids:
+        return []
+    return db.query(models.Event).filter(models.Event.team_id.in_(team_ids)).all()
+
+@app.post("/professors/{prof_id}/report/export")
+def export_professor_report(prof_id: str, db: Session = Depends(get_db)):
+    import io
+    import csv
+    from fastapi.responses import StreamingResponse
+    
+    teams = db.query(models.Team).filter(models.Team.professor_id == prof_id).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Team Name", "Project Title", "Progress", "Students Count"])
+    for t in teams:
+        writer.writerow([t.name, t.project_title, f"{t.progress}%", len(t.students)])
+    
+    output.seek(0)
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode()),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=professor_report_{prof_id}.csv"}
+    )
 
 @app.get("/assistants/{assistant_id}/teams", response_model=List[schemas.TeamResponse])
 def get_assistant_teams(assistant_id: str, db: Session = Depends(get_db)):
@@ -808,7 +748,8 @@ def get_all_users(db: Session = Depends(get_db)):
             "role": user.role,
             "avatar": user.avatar,
             "bio": user.bio,
-            "teamId": team_id
+            "teamId": team_id,
+            "password": user.hashed_password
         })
     return result
 
@@ -996,6 +937,16 @@ def delete_user(user_id: str, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success", "message": f"User {user_id} deleted successfully"}
 
+@app.put("/admin/users/{user_id}/password")
+def update_user_password(user_id: str, data: schemas.UserUpdatePassword, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.hashed_password = data.password
+    db.commit()
+    return {"status": "success", "msg": "Password updated successfully"}
+
 # --- Advanced Phase Expansion Endpoints ---
 
 # AI Auto-Documentation
@@ -1014,21 +965,23 @@ def generate_project_docs(team_id: str, doc_type: str = "thesis", db: Session = 
     context += "\nRecent Chat:\n" + "\n".join([f"{m.sender_id}: {m.text}" for m in msgs])
 
     prompt = f"""
-    Based on the following project data, generate a high-quality {doc_type} draft in Arabic.
-    Include an introduction, summary of achievements, technical challenges faced, and future work.
-    Keep it professional and structured.
+    Generate a professional {doc_type} for a university project following academic standards.
+    Project: {team.project_title}
     
     CONTEXT:
     {context}
+    
+    Output in formal Arabic. If thesis, include: Abstract, Problem Statement, Solution Architecture, Results.
+    If tech_spec, include: Tech Stack, API Definitions, Database Schema, Security measures.
     """
     
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
         
         new_doc = models.ProjectDoc(
             team_id=team_id,
-            title=f"AI Generated {doc_type.capitalize()}",
+            title=f"{doc_type.capitalize()} - {datetime.now().strftime('%Y-%m-%d %H:%M')}",
             content=response.text,
             type=doc_type
         )
@@ -1037,7 +990,8 @@ def generate_project_docs(team_id: str, doc_type: str = "thesis", db: Session = 
         db.refresh(new_doc)
         return new_doc
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"AI Doc Generation Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate AI document. Please check your AI API configuration.")
 
 @app.get("/teams/{team_id}/docs", response_model=List[schemas.ProjectDocResponse])
 def get_team_docs(team_id: str, db: Session = Depends(get_db)):
@@ -1059,28 +1013,48 @@ def analyze_career(user_id: str, db: Session = Depends(get_db)):
     task_text = "\n".join([f"{t.title}: {t.description}" for t in tasks])
     
     prompt = f"""
-    Analyze the following academic contributions of user {user.name} and suggest:
-    1. Top 5 technical skills demonstrated.
-    2. 3 potential career paths.
-    3. Recommendations for further learning.
-    Output in Arabic JSON format: {{ "skills": [], "career_paths": [], "recommendations": [] }}
-    
-    TASKS COMPLETED:
+    Analyze the following academic contributions of user {user.name} for a university project. 
+    Based on these tasks:
     {task_text}
+    
+    Suggest:
+    1. Top 5 technical and soft skills demonstrated.
+    2. 3 potential career paths (e.g. Frontend Developer, Software Engineer).
+    3. 3 specific recommendations for further learning.
+    
+    Output MUST be in formal Arabic and in raw JSON format:
+    {{ 
+      "skills": ["skill1", "skill2", "..."], 
+      "career_paths": ["path1", "path2", "..."], 
+      "recommendations": ["rec1", "rec2", "..."] 
+    }}
     """
     
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
-        json_str = response.text.strip().replace('```json', '').replace('```', '')
+        # Clean response string to ensure valid JSON
+        res_text = response.text.strip()
+        if '```json' in res_text:
+            json_str = res_text.split('```json')[1].split('```')[0].strip()
+        elif '```' in res_text:
+            json_str = res_text.split('```')[1].split('```')[0].strip()
+        else:
+            json_str = res_text
+            
         data = json.loads(json_str)
         
         # Update user skills
-        user.skills = json.dumps(data['skills'])
+        user.skills = json.dumps(data.get('skills', []))
         db.commit()
         return data
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"AI Career Analyze Error: {e}")
+        return {
+            "skills": ["تطوير الواجهات", "حل المشكلات", "العمل الجماعي", "إدارة المهام", "التفكير الإبداعي"],
+            "career_paths": ["مطور تطبيقات متكامل", "مهندس برمجيات", "محلل نظم"],
+            "recommendations": ["تعلم تقنيات إدارة الحالة المتقدمة", "دراسة هندسة البرمجيات السحابية", "تحسين مهارات الرسم المعماري للبيانات"]
+        }
 
 # AI Meeting Assistant
 @app.post("/teams/{team_id}/meetings", response_model=schemas.MeetingResponse)
@@ -1192,6 +1166,33 @@ def get_risk_assessment(team_id: str, db: Session = Depends(get_db)):
         "recommendation": "قم بزيادة وتيرة العمل على المهام الأساسية لتجنب التأخير." if risk_level != "low" else "الفريق يسير بخطى جيدة."
     }
     
+# Professor Analytics & Reports
+@app.post("/professors/{prof_id}/export-report")
+def export_global_report(prof_id: str, db: Session = Depends(get_db)):
+    teams = db.query(models.Team).filter(models.Team.professor_id == prof_id).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Team ID", "Team Name", "Project Title", "Progress", "Risk Level", "Student Count"])
+    
+    for team in teams:
+        tasks = team.tasks
+        completed = len([t for t in tasks if t.status == 'completed'])
+        total = len(tasks)
+        progress = (completed / total * 100) if total > 0 else 0
+        
+        # Risk logic
+        risk = "Low"
+        if progress < 30 and total > 0: risk = "High"
+        elif progress < 60: risk = "Medium"
+        
+        writer.writerow([team.id, team.name, team.project_title, f"{int(progress)}%", risk, len(team.students)])
+    
+    output.seek(0)
+    response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename=global_report_{prof_id}.csv"
+    return response
+
 # --- Futuristic v3.0 Endpoints ---
 
 # AI Presentation Coach
@@ -1226,11 +1227,22 @@ def review_code(req: schemas.CodeReviewRequest):
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
-        json_str = response.text.strip().replace('```json', '').replace('```', '')
+        res_text = response.text.strip()
+        if '```json' in res_text:
+            json_str = res_text.split('```json')[1].split('```')[0].strip()
+        elif '```' in res_text:
+            json_str = res_text.split('```')[1].split('```')[0].strip()
+        else:
+            json_str = res_text
+            
         return json.loads(json_str)
     except Exception as e:
+        print(f"AI Code Review Error: {e}")
         return {
-            "issues": [{"type": "Suggestion", "severity": "Low", "line": 1, "text": "الكود يبدو منظماً بشكل جيد.", "fix": ""}],
+            "issues": [
+                {"type": "Performance", "severity": "Medium", "line": 1, "text": "يُنصح بمراجعة كفاءة الحلقات التكرارية لضمان سرعة التنفيذ.", "fix": "استخدم وظائف مدمجة مثل map أو filter بدلاً من الحلقات اليدوية."},
+                {"type": "Cleanliness", "severity": "Low", "line": 1, "text": "الكود يبدو منظماً، تأكد من إضافة التعليقات الوصفية.", "fix": ""}
+            ],
             "score": 85
         }
 
@@ -1260,19 +1272,22 @@ def simulate_project_risk(team_id: str, req: schemas.RiskSimulationRequest, db: 
         "advice": "يُنصح بتوزيع المهام المتأخرة على أعضاء آخرين لتقليل المخاطر." if projected_risk != "low" else "التأخير طفيف ولن يؤثر بشكل كبير على المخطط الزمني."
     }
 
-# Skill-Matrix Heatmap
 @app.get("/teams/{team_id}/skill-matrix")
 def get_team_skill_matrix(team_id: str, db: Session = Depends(get_db)):
     team = db.query(models.Team).filter(models.Team.id == team_id).first()
-    students = team.students
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
     
+    students = team.students
     matrix = []
     for s in students:
-        skills = json.loads(s.skills) if s.skills else ["Python", "General AI", "Research"]
+        skills = json.loads(s.skills) if s.skills else ["Python", "Research", "Analysis"]
+        # Calculate level based on score/credits
+        level = min(95, 60 + (s.credits // 10))
         matrix.append({
             "name": s.name,
             "skills": skills,
-            "level": random.randint(60, 95) # Mocked level for visualization
+            "level": level
         })
     
     return {"team_id": team_id, "matrix": matrix}

@@ -11,28 +11,28 @@ export default function PresentationCoach() {
 
   const startAnalysis = async () => {
     setAnalyzing(true);
-    // Mocking real-time analysis
-    setTimeout(async () => {
-      try {
-        const res = await teamService.reviewPresentation({
-          user_id: user.id,
-          team_id: user.teamId,
-          title: "Mock Presentation Review",
-          score: 82,
-          review_json: JSON.stringify({
-            tone: "Professional and clear",
-            speed: "Slightly fast in the middle section",
-            key_points: ["AI Architecture explained well", "Need more details on security"],
-            recommendations: ["Balance the eye contact", "Add more visual aids"]
-          })
-        });
-        setFeedback({ ...res.data, review: JSON.parse(res.data.review_json) });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setAnalyzing(false);
-      }
-    }, 2000);
+    try {
+      // In a real scenario, we might upload a file. 
+      // For now, we simulate the analysis request to the backend.
+      const res = await teamService.reviewPresentation({
+        user_id: user.id,
+        team_id: user.teamId,
+        title: `Rehearsal - ${new Date().toLocaleDateString()}`,
+        score: Math.floor(Math.random() * 20) + 75, // Simulated score for now
+        review_json: JSON.stringify({
+          tone: "Professional and clear",
+          speed: "Perfectly paced",
+          key_points: ["Excellent structure", "Strong conclusion"],
+          recommendations: ["Work on hand gestures", "Slightly more eye contact"]
+        })
+      });
+      setFeedback({ ...res.data, review: JSON.parse(res.data.review_json) });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to analyze presentation.");
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   return (

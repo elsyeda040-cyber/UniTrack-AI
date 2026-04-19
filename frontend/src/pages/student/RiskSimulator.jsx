@@ -12,7 +12,10 @@ export default function RiskSimulator() {
   const runSimulation = async () => {
     setLoading(true);
     try {
-      const res = await teamService.simulateRisk(user.teamId, [{ task_id: 'hypothetical', delay_days: parseInt(delay) }]);
+      const res = await teamService.simulateRisk(user.teamId, {
+        team_id: user.teamId,
+        hypothetical_delays: [{ task_id: 'hypothetical', delay_days: parseInt(delay) }]
+      });
       setSimulation(res.data);
     } catch (err) {
       console.error(err);

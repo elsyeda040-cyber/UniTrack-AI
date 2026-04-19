@@ -32,12 +32,7 @@ export default function ProfessorSchedule() {
   const [showModal, setShowModal] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
-  const [meetings, setMeetings] = useState([
-    // Mock initial meetings
-    { id: 'm1', title: 'مراجعة الفريق الأول', type: 'review', teamId: null, teamName: 'فريق AI', day: new Date().getDate(), month: new Date().getMonth(), year: new Date().getFullYear(), time: '10:00', duration: '60', notes: '' },
-    { id: 'm2', title: 'عرض المشروع النهائي', type: 'presentation', teamId: null, teamName: 'فريق ML', day: new Date().getDate() + 3, month: new Date().getMonth(), year: new Date().getFullYear(), time: '14:00', duration: '90', notes: 'يجب التحضير مسبقاً' },
-    { id: 'm3', title: 'جلسة استشارية', type: 'consultation', teamId: null, teamName: 'فريق Web', day: new Date().getDate() + 7, month: new Date().getMonth(), year: new Date().getFullYear(), time: '11:00', duration: '45', notes: '' },
-  ]);
+  const [meetings, setMeetings] = useState([]);
 
   const [newMeeting, setNewMeeting] = useState({
     title: '',
@@ -54,10 +49,33 @@ export default function ProfessorSchedule() {
 
   useEffect(() => {
     if (user?.id) {
-      professorService.getTeams(user.id)
-        .then(res => setTeams(res.data || []))
-        .catch(() => {})
-        .finally(() => setLoading(false));
+      const loadData = async () => {
+        try {
+          const [teamsRes, eventsRes] = await Promise.all([
+            professorService.getTeams(user.id),
+            professorService.getEvents(user.id)
+          ]);
+          setTeams(teamsRes.data || []);
+          
+          // Map backend events to internal UI format
+          const mapped = (eventsRes.data || []).map(e => {
+            const d = new Date(e.date);
+            return {
+              ...e,
+              day: d.getDate(),
+              month: d.getMonth(),
+              year: d.getFullYear(),
+              time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
+            };
+          });
+          setMeetings(mapped);
+        } catch (err) {
+          console.error("Failed to load schedule data", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadData();
     }
   }, [user]);
 
@@ -71,19 +89,44 @@ export default function ProfessorSchedule() {
   const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
-  const handleCreateMeeting = (e) => {
+  const handleCreateMeeting = async (e) => {
     e.preventDefault();
-    const meeting = {
-      ...newMeeting,
-      id: `m-${Date.now()}`,
-      teamName: teams.find(t => t.id === newMeeting.teamId)?.name || newMeeting.teamName || 'فريق غير محدد',
-    };
-    setMeetings(prev => [...prev, meeting]);
-    setShowModal(false);
-    setNewMeeting({ title: '', type: 'review', teamId: '', teamName: '', day: new Date().getDate(), month: new Date().getMonth(), year: new Date().getFullYear(), time: '09:00', duration: '60', notes: '' });
+    try {
+      // Construct ISO date: YYYY-MM-DDTHH:MM
+      const isoDate = new Date(newMeeting.year, newMeeting.month, newMeeting.day, ...newMeeting.time.split(':')).toISOString();
+      
+      const payload = {
+        team_id: newMeeting.teamId,
+        title: newMeeting.title,
+        description: newMeeting.notes,
+        date: isoDate,
+        type: newMeeting.type === 'review' ? 'milestone' : 'meeting', // align with backend types
+        color: MEETING_TYPES[newMeeting.type]?.color || '#3b82f6'
+      };
+
+      const res = await teamService.createEvent(payload);
+      
+      const mappedNew = {
+        ...res.data,
+        day: newMeeting.day,
+        month: newMeeting.month,
+        year: newMeeting.year,
+        time: newMeeting.time,
+        teamName: teams.find(t => t.id === newMeeting.teamId)?.name || 'فريق غير محدد'
+      };
+
+      setMeetings(prev => [...prev, mappedNew]);
+      setShowModal(false);
+      setNewMeeting({ title: '', type: 'review', teamId: '', teamName: '', day: new Date().getDate(), month: new Date().getMonth(), year: new Date().getFullYear(), time: '09:00', duration: '60', notes: '' });
+      alert("تمت إضافة الموعد بنجاح!");
+    } catch (err) {
+      console.error(err);
+      alert("فشل إضافة الموعد. يرجى التأكد من اختيار الفريق.");
+    }
   };
 
-  const handleDeleteMeeting = (id) => {
+  const handleDeleteMeeting = async (id) => {
+    // Current backend doesn't have delete event endpoint yet, adding it for consistency
     setMeetings(prev => prev.filter(m => m.id !== id));
   };
 

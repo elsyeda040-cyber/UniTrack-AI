@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { adminService, teamService } from '../../services/api';
-import { Plus, Search, Trash2, Mail, Users, BookOpen, GraduationCap, Loader2, X } from 'lucide-react';
+import { Plus, Search, Trash2, Mail, Users, BookOpen, GraduationCap, Loader2, X, Eye, EyeOff, Key, Check } from 'lucide-react';
 
 export default function AdminUsers() {
-  const [tab, setTab] = useState('professors');
-  const [search, setSearch] = useState('');
+  const location = useLocation();
+  const [tab, setTab] = useState(location.state?.tab || 'professors');
+  const [search, setSearch] = useState(location.state?.search || '');
+  const [filter, setFilter] = useState(location.state?.filter || 'all');
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
+  const [isEditPasswordModalOpen, setIsEditPasswordModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPasswordMap, setShowPasswordMap] = useState({});
   const [newTeamId, setNewTeamId] = useState('');
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'student', teamId: '', createNewTeam: false, newTeamName: '', newTeamProjectTitle: '', bio: '' });
   const [newTeam, setNewTeam] = useState({ name: '', project_title: '', color: '#3b82f6', emoji: '🚀' });
@@ -19,6 +25,18 @@ export default function AdminUsers() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setTab(location.state.tab);
+    }
+    if (location.state?.filter) {
+      setFilter(location.state.filter);
+    }
+    if (location.state?.search) {
+      setSearch(location.state.search);
+    }
+  }, [location.state]);
 
   const fetchData = async () => {
     try {
@@ -126,6 +144,23 @@ export default function AdminUsers() {
     }
   };
 
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    try {
+      await adminService.updateUserPassword(editingUser.id, newPassword);
+      setUsers(users.map(u => u.id === editingUser.id ? { ...u, password: newPassword } : u));
+      setIsEditPasswordModalOpen(false);
+      alert("تم تحديث كلمة المرور بنجاح!");
+    } catch (err) {
+      console.error("Password update error:", err);
+      alert("فشل تحديث كلمة المرور.");
+    }
+  };
+
+  const togglePasswordVisibility = (userId) => {
+    setShowPasswordMap(prev => ({ ...prev, [userId]: !prev[userId] }));
+  };
+
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(search.toLowerCase()) || 
     u.email.toLowerCase().includes(search.toLowerCase())
@@ -180,6 +215,7 @@ export default function AdminUsers() {
                 <th className="pb-3 font-semibold">Email</th>
                 <th className="pb-3 font-semibold">Supervisor</th>
                 <th className="pb-3 font-semibold">Teams</th>
+                <th className="pb-3 font-semibold">Password</th>
                 <th className="pb-3 font-semibold">Rating</th>
                 <th className="pb-3 font-semibold"></th>
               </tr></thead>
@@ -191,6 +227,17 @@ export default function AdminUsers() {
                     <td className="py-3 text-slate-500 dark:text-slate-400 capitalize">{p.role}</td>
                     <td className="py-3 text-slate-700 dark:text-slate-200">
                       {teams.filter(t => t.professor_id === p.id).length}
+                    </td>
+                    <td className="py-3 text-slate-500 font-mono text-xs">
+                      <div className="flex items-center gap-2">
+                        <span>{showPasswordMap[p.id] ? p.password : '••••••••'}</span>
+                        <button onClick={() => togglePasswordVisibility(p.id)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-400">
+                          {showPasswordMap[p.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                        <button onClick={() => { setEditingUser(p); setNewPassword(p.password || ''); setIsEditPasswordModalOpen(true); }} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-blue-500">
+                          <Key className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                     <td className="py-3 font-bold text-amber-500">4.8 ⭐</td>
                     <td className="py-3">
@@ -215,6 +262,7 @@ export default function AdminUsers() {
                 <th className="pb-3 font-semibold">Student</th>
                 <th className="pb-3 font-semibold">Email</th>
                 <th className="pb-3 font-semibold">Team ID</th>
+                <th className="pb-3 font-semibold">Password</th>
                 <th className="pb-3 font-semibold">Bio</th>
               </tr></thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
@@ -226,6 +274,17 @@ export default function AdminUsers() {
                     </td>
                     <td className="py-3 text-slate-500">{s.email}</td>
                     <td className="py-3 text-slate-400 text-xs">{s.teamId || 'No Team'}</td>
+                    <td className="py-3 text-slate-500 font-mono text-xs">
+                      <div className="flex items-center gap-2">
+                        <span>{showPasswordMap[s.id] ? s.password : '••••••••'}</span>
+                        <button onClick={() => togglePasswordVisibility(s.id)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-400">
+                          {showPasswordMap[s.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                        <button onClick={() => { setEditingUser(s); setNewPassword(s.password || ''); setIsEditPasswordModalOpen(true); }} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-blue-500">
+                          <Key className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
                     <td className="py-3 text-slate-400 truncate max-w-[150px]">{s.bio}</td>
                     <td className="py-3">
                       <div className="flex items-center gap-1">
@@ -243,7 +302,16 @@ export default function AdminUsers() {
 
       {tab === 'teams' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {teams.map(team => (
+          {teams
+            .filter(t => {
+              const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase()) || 
+                                   t.project_title.toLowerCase().includes(search.toLowerCase());
+              if (filter === 'atRisk') return matchesSearch && t.progress < 30;
+              if (filter === 'completed') return matchesSearch && t.progress === 100;
+              if (filter === 'inProgress') return matchesSearch && t.progress > 0 && t.progress < 100;
+              return matchesSearch;
+            })
+            .map(team => (
             <div key={team.id} className="card">
               <div className="flex items-center gap-3 mb-3">
                 <div className="text-2xl">{team.emoji}</div>
@@ -470,6 +538,43 @@ export default function AdminUsers() {
               <div className="flex justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setIsEditTeamModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">Cancel</button>
                 <button type="submit" className="btn-primary px-6">Update Team</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Edit Password Modal */}
+      {isEditPasswordModalOpen && editingUser && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">Change User Password</h3>
+              <button onClick={() => setIsEditPasswordModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdatePassword} className="p-6 space-y-4">
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl mb-4">
+                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">User: {editingUser.name}</p>
+                <p className="text-xs text-amber-600/70 dark:text-amber-400/70 uppercase font-bold tracking-wider mt-1">{editingUser.email}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">New Password</label>
+                <div className="relative">
+                  <Key className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    required 
+                    type="text" 
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className="input w-full pl-9"
+                    placeholder="Enter new secure password"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsEditPasswordModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" className="btn-primary px-6">Update Password</button>
               </div>
             </form>
           </div>

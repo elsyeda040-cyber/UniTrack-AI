@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminService, teamService } from '../../services/api';
 import { 
   Shield, Loader2, Star, CheckCircle, Clock, Users, TrendingUp, 
@@ -38,9 +39,12 @@ function NotificationBanner({ notifications, onDismiss }) {
 }
 
 // ─── Stat Card ──────────────────────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, sub, color, trend }) {
+function StatCard({ icon: Icon, label, value, sub, color, trend, onClick }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-all group">
+    <div 
+      onClick={onClick}
+      className={`bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-all group ${onClick ? 'cursor-pointer hover:border-orange-200' : ''}`}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className={`w-11 h-11 ${color} rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform`}>
           <Icon className="w-5 h-5 text-white" />
@@ -67,6 +71,7 @@ export default function AdminDashboard() {
   const [selectedProfessor, setSelectedProfessor] = useState(null);
   const [expandedTeamId, setExpandedTeamId] = useState(null);
   const [bannerNotifs, setBannerNotifs] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -156,7 +161,7 @@ export default function AdminDashboard() {
         </h2>
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => alert("جاري تجهيز تقرير النظام الشامل للتحميل...")}
+            onClick={() => navigate('/admin/reports')}
             className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-bold transition-all shadow-sm border border-slate-200 dark:border-slate-700">
             <Download className="w-4 h-4" />
             تصدير التقرير
@@ -179,6 +184,7 @@ export default function AdminDashboard() {
           sub="طالب نشط في المنصة"
           color="bg-blue-500"
           trend={12}
+          onClick={() => navigate('/admin/users', { state: { tab: 'students' } })}
         />
         <StatCard
           icon={Shield}
@@ -187,6 +193,7 @@ export default function AdminDashboard() {
           sub="عضو هيئة تدريس"
           color="bg-purple-500"
           trend={5}
+          onClick={() => navigate('/admin/users', { state: { tab: 'professors' } })}
         />
         <StatCard
           icon={BarChart2}
@@ -195,6 +202,7 @@ export default function AdminDashboard() {
           sub={`${teamsOnTrack} فريق على المسار`}
           color="bg-emerald-500"
           trend={avgProgress > 50 ? 8 : -3}
+          onClick={() => navigate('/admin/analytics')}
         />
         <StatCard
           icon={AlertCircle}
@@ -203,12 +211,13 @@ export default function AdminDashboard() {
           sub="تقدم أقل من 30%"
           color={teamsAtRisk > 0 ? "bg-red-500" : "bg-slate-400"}
           trend={teamsAtRisk > 0 ? -teamsAtRisk * 5 : 0}
+          onClick={() => navigate('/admin/users', { state: { tab: 'teams', filter: 'atRisk' } })}
         />
       </div>
 
       {/* ── Secondary Stats Row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 text-white shadow-sm">
+        <div onClick={() => navigate('/admin/users', { state: { tab: 'teams', filter: 'all' } })} className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 text-white shadow-sm cursor-pointer hover:shadow-md hover:scale-[1.01] transition-all">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-5 h-5 opacity-80" />
             <span className="text-sm font-semibold opacity-80">إجمالي الفرق</span>
@@ -216,7 +225,7 @@ export default function AdminDashboard() {
           <p className="text-4xl font-black">{teams.length}</p>
           <p className="text-xs opacity-70 mt-1">فريق مسجل في النظام</p>
         </div>
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-sm">
+        <div onClick={() => navigate('/admin/users', { state: { tab: 'teams', filter: 'completed' } })} className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-sm cursor-pointer hover:shadow-md hover:scale-[1.01] transition-all">
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle className="w-5 h-5 opacity-80" />
             <span className="text-sm font-semibold opacity-80">فرق مكتملة</span>
@@ -224,7 +233,7 @@ export default function AdminDashboard() {
           <p className="text-4xl font-black">{teams.filter(t => t.progress === 100).length}</p>
           <p className="text-xs opacity-70 mt-1">وصلت إلى 100% إنجاز</p>
         </div>
-        <div className="col-span-2 lg:col-span-1 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-5 text-white shadow-sm">
+        <div onClick={() => navigate('/admin/users', { state: { tab: 'teams', filter: 'inProgress' } })} className="col-span-2 lg:col-span-1 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-5 text-white shadow-sm cursor-pointer hover:shadow-md hover:scale-[1.01] transition-all">
           <div className="flex items-center gap-2 mb-3">
             <Clock className="w-5 h-5 opacity-80" />
             <span className="text-sm font-semibold opacity-80">قيد التطوير</span>

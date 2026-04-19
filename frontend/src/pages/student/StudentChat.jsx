@@ -209,15 +209,20 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
   const handleDelete = async (msgId) => {
     if (!window.confirm("هل أنت متأكد من حذف هذه الرسالة؟") || !user) return;
     try {
-      // Optimistic logic: remove from local state immediately
-      setMessages(messages.filter(m => m.id !== msgId));
+      // If it's an optimistic ID (from Date.now()), it won't be in the DB yet.
+      // We can just remove it from the UI.
+      const isOptimistic = typeof msgId === 'number' && msgId > 1000000000000;
       
-      await teamService.deleteMessage(activeTeamId, msgId, user.id);
+      setMessages(prev => prev.filter(m => m.id !== msgId));
+      
+      if (!isOptimistic) {
+        await teamService.deleteMessage(activeTeamId, msgId, user.id);
+      }
       fetchMessages(true);
     } catch (err) {
       console.error("Failed to delete message", err);
       alert("فشل حذف الرسالة. يرجى المحاولة مرة أخرى.");
-      fetchMessages(true); // Revert to server state
+      fetchMessages(true);
     }
   };
 

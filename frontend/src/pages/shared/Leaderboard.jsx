@@ -13,15 +13,16 @@ const Leaderboard = () => {
   const fetchLeaderboard = async () => {
     try {
       const res = await userService.getLeaderboard();
-      setData(res.data);
+      // Filter out admin users
+      setData(res.data.filter(u => u.role.toLowerCase() !== 'admin'));
     } catch (err) {
       console.error("Error fetching leaderboard:", err);
       // Fallback fallback
       setData([
-        { id: "1", name: "Ahmed Mohamed", role: "Student", score: 1250 },
-        { id: "2", name: "Hossam Dagaks", role: "Student", score: 1100 },
-        { id: "3", name: "Sara Ahmed", role: "Student", score: 950 },
-        { id: "4", name: "Omar Khalid", role: "Student", score: 800 },
+        { id: "1", name: "Ahmed Mohamed", role: "Student", score: 1250, teamName: "AI Innovators" },
+        { id: "2", name: "Hossam Dagaks", role: "Student", score: 1100, teamName: "ML Pioneers" },
+        { id: "3", name: "Sara Ahmed", role: "Student", score: 950, teamName: "Web Wizards" },
+        { id: "4", name: "Omar Khalid", role: "Student", score: 800, teamName: "Design Systems" },
       ]);
     } finally {
       setLoading(false);
@@ -67,7 +68,7 @@ const Leaderboard = () => {
                   </div>
                   <div>
                     <div className="font-semibold text-gray-800">{user.name}</div>
-                    <div className="text-xs text-gray-400">Team Alpha</div>
+                    <div className="text-xs text-gray-400">{user.teamName || 'Independent'}</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600 font-medium">

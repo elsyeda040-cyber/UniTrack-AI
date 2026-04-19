@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technical Stack & Development Tools – UniTrack AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f8fafc;
+    color: #111827;
+    padding: 40px 20px 60px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ── Page Wrapper ── */
+  .page {
+    max-width: 920px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  /* ── Document Header ── */
+  .doc-header {
+    background: #1e40af;
+    padding: 40px 50px 32px;
+    color: white;
+  }
+  .doc-header .proj-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .doc-header h1 {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+  .doc-header p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    max-width: 600px;
+  }
+  .doc-meta {
+    display: flex;
+    gap: 30px;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    flex-wrap: wrap;
+  }
+  .doc-meta-item { font-size: 12px; }
+  .doc-meta-item .label { color: rgba(255,255,255,0.55); margin-bottom: 2px; }
+  .doc-meta-item .value { font-weight: 700; color: white; }
+
+  /* ── Summary Stats Bar ── */
+  .stats-bar {
+    display: flex;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .stat-cell {
+    flex: 1;
+    padding: 18px 24px;
+    border-right: 1px solid #e5e7eb;
+    text-align: center;
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num {
+    font-size: 24px;
+    font-weight: 900;
+    color: #1e40af;
+    display: block;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Document Body ── */
+  .doc-body {
+    padding: 0 50px 50px;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-top: 40px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #1e40af;
+  }
+  .section-num {
+    width: 32px;
+    height: 32px;
+    background: #1e40af;
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1e3a8a;
+  }
+  .section-subtitle {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+
+  /* ── Tool Cards Table ── */
+  .tool-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .tool-table thead tr {
+    background: #f1f5f9;
+  }
+  .tool-table th {
+    padding: 12px 18px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 800;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-bottom: 2px solid #d1d5db;
+  }
+  .tool-table th:first-child { width: 220px; }
+  .tool-table th:nth-child(2) { width: 110px; }
+  .tool-table td {
+    padding: 14px 18px;
+    vertical-align: top;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 13.5px;
+  }
+  .tool-table tr:last-child td { border-bottom: none; }
+  .tool-table tr:nth-child(even) td { background: #fafafa; }
+
+  .tool-name {
+    font-weight: 700;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tool-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .tool-version {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .tool-role {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .tool-desc { color: #374151; line-height: 1.6; }
+
+  /* ── Nested Libraries ── */
+  .libs-block {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-left: 3px solid #1e40af;
+    border-radius: 0 6px 6px 0;
+  }
+  .libs-header {
+    font-size: 11px;
+    font-weight: 800;
+    color: #1e40af;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .lib-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    border-top: 1px solid #e5e7eb;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #374151;
+  }
+  .lib-item:first-of-type { border-top: none; padding-top: 0; }
+  .lib-item::before { content: '▸'; color: #1e40af; font-size: 10px; margin-top: 3px; flex-shrink: 0; }
+  .lib-item strong { color: #111827; }
+  .lib-opt { display: inline-block; padding: 1px 6px; background: #fef3c7; color: #92400e; border-radius: 3px; font-size: 10px; font-weight: 700; margin-left: 4px; }
+  .libs-block.green { border-left-color: #059669; }
+  .libs-block.green .libs-header { color: #059669; }
+  .libs-block.green .lib-item::before { color: #059669; }
+  .libs-block.orange { border-left-color: #ea580c; }
+  .libs-block.orange .libs-header { color: #ea580c; }
+  .libs-block.orange .lib-item::before { color: #ea580c; }
+
+  /* Status badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
+  .badge-primary { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+  .badge-green { background: #f0fdf4; color: #059669; border: 1px solid #bbf7d0; }
+  .badge-orange { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+  .badge-purple { background: #faf5ff; color: #7c3aed; border: 1px solid #e9d5ff; }
+  .badge-grey { background: #f9fafb; color: #374151; border: 1px solid #e5e7eb; }
+
+  /* ── Separator ── */
+  .sep {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 40px 0 0;
+  }
+
+  /* ── Stack Summary Grid ── */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .stack-pill {
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px 10px;
+    text-align: center;
+    background: white;
+  }
+  .stack-pill .sp-icon { font-size: 22px; margin-bottom: 6px; }
+  .stack-pill .sp-name { font-size: 11px; font-weight: 700; color: #111827; }
+  .stack-pill .sp-cat { font-size: 10px; color: #6b7280; margin-top: 2px; }
+
+  /* ── Footer ── */
+  .doc-footer {
+    background: #f8fafc;
+    border-top: 2px solid #e5e7eb;
+    padding: 20px 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .doc-footer .fl { font-size: 12px; color: #6b7280; }
+  .doc-footer .fr { font-size: 12px; color: #6b7280; text-align: right; }
+
+  /* ── Print ── */
+  @media print {
+    body { background: white; padding: 0; font-size: 12px; }
+    .page { border: none; border-radius: 0; }
+    .doc-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .stats-bar, .tool-table thead tr, .section-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-btn { display: none; }
+  }
+
+  /* ── Print Button ── */
+  .print-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 12px 24px;
+    background: #1e40af;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 4px 12px rgba(30,64,175,0.3);
+  }
+  .print-btn:hover { background: #1e3a8a; }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
+
+<div class="page">
+
+  <!-- ══════════ DOCUMENT HEADER ══════════ -->
+  <div class="doc-header">
+    <div class="proj-badge">Graduation Project Documentation</div>
+    <h1>Technical Stack &amp; Development Tools<br>for UniTrack AI</h1>
+    <p>A comprehensive overview of all technologies, frameworks, and tools used in the design, development, and deployment of the UniTrack AI academic project-tracking platform.</p>
+    <div class="doc-meta">
+      <div class="doc-meta-item">
+        <div class="label">Platform</div>
+        <div class="value">UniTrack AI</div>
+      </div>
+      <div class="doc-meta-item">
+        <div class="label">Document Type</div>
+        <div class="value">Technical Reference</div>
+      </div>
+      <div class="doc-meta-item">
+        <div class="label">Version</div>
+        <div class="value">1.0 — April 2026</div>
+      </div>
+      <div class="doc-meta-item">
+        <div class="label">Total Tools</div>
+        <div class="value">17 Tools / Frameworks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ STATS BAR ══════════ -->
+  <div class="stats-bar">
+    <div class="stat-cell">
+      <span class="stat-num">5</span>
+      <span class="stat-label">Categories</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num">17</span>
+      <span class="stat-label">Tools &amp; Frameworks</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num">3</span>
+      <span class="stat-label">Deployment Platforms</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num">10</span>
+      <span class="stat-label">UML Diagrams</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num">Full</span>
+      <span class="stat-label">Stack Coverage</span>
+    </div>
+  </div>
+
+  <!-- ══════════ DOCUMENT BODY ══════════ -->
+  <div class="doc-body">
+
+    <!-- ── SECTION 1: Frontend ── -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <div>
+          <div class="section-title">Frontend Development (React.js Environment)</div>
+          <div class="section-subtitle">Client-side technologies, UI libraries, and dependencies</div>
+        </div>
+      </div>
+
+      <table class="tool-table">
+        <thead>
+          <tr>
+            <th>Tool / Framework</th>
+            <th>Version / Tag</th>
+            <th>Role, Purpose &amp; Included Libraries</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">⚛️</span> React.js</div>
+              <div class="tool-role">Core UI Library</div>
+            </td>
+            <td><span class="tool-version">v18</span></td>
+            <td class="tool-desc">
+              Core library for building a dynamic <strong>Single Page Application (SPA)</strong>. Uses component-based architecture to build reusable UI elements. Manages complex UI states including dashboards, task lists, notifications, and real-time chat across four user roles.
+              <div class="libs-block">
+                <div class="libs-header">📦 Libraries Included</div>
+                <div class="lib-item"><strong>React Router DOM v6</strong> — Seamless client-side navigation between dashboard pages with role-based route guards and protected routes.</div>
+                <div class="lib-item"><strong>Axios</strong> — Promise-based HTTP client for handling all API requests to the backend. Supports interceptors for automatic JWT token attachment and error handling.</div>
+                <div class="lib-item"><strong>Lucide React / Heroicons</strong> — Professional, consistent SVG icon libraries providing 1,000+ system icons for menus, actions, statuses, and notifications.</div>
+                <div class="lib-item"><strong>Framer Motion</strong> <span class="lib-opt">Optional</span> — Declarative animation library for smooth UI micro-animations including page transitions, modal entrances, and list item reveals.</div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🎨</span> Tailwind CSS</div>
+              <div class="tool-role">Styling &amp; Design Framework</div>
+            </td>
+            <td><span class="tool-version">v3</span></td>
+            <td class="tool-desc">
+              Utility-first CSS framework for <strong>modern, responsive, and consistent UI styling</strong>. Enables rapid design iteration directly in JSX without custom CSS files. Used for all layout, spacing, typography, colors, and responsive grids.
+              <div class="libs-block">
+                <div class="libs-header">📦 Libraries Included</div>
+                <div class="lib-item"><strong>Headless UI</strong> — Completely unstyled, fully accessible UI component primitives (Modals, Dropdowns, Tabs) designed to integrate with Tailwind CSS.</div>
+                <div class="lib-item"><strong>Tailwind Merge (twMerge)</strong> — Utility for intelligently merging Tailwind CSS class names without style conflicts, especially in dynamic component props.</div>
+                <div class="lib-item"><strong>clsx</strong> — Lightweight utility for conditionally joining CSS class names, enabling clean dynamic class management in React components.</div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">📜</span> JavaScript (ES6+)</div>
+              <div class="tool-role">Client-Side Logic</div>
+            </td>
+            <td><span class="tool-version">ES2022</span></td>
+            <td class="tool-desc">
+              Core programming language for all <strong>client-side logic and interactivity</strong>. Implements async/await for API calls, arrow functions, destructuring, and modules. Powers form handling, data transformation, state updates, and the Web Speech API integration for voice commands.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">⚡</span> Vite</div>
+              <div class="tool-role">Build Tool &amp; Dev Server</div>
+            </td>
+            <td><span class="tool-version">v5</span></td>
+            <td class="tool-desc">
+              Ultra-fast frontend <strong>build tool and development server</strong>. Provides instant Hot Module Replacement (HMR), fast cold starts, and optimized production bundles. Deployed via Vercel for continuous delivery.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── SECTION 2: Backend ── -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <div>
+          <div class="section-title">Backend &amp; Server Side (Node.js / Laravel / FastAPI)</div>
+          <div class="section-subtitle">Server-side processing, business logic, authentication, and file handling libraries</div>
+        </div>
+      </div>
+
+      <table class="tool-table">
+        <thead>
+          <tr>
+            <th>Tool / Framework</th>
+            <th>Language</th>
+            <th>Role, Purpose &amp; Included Libraries</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🟢</span> Node.js / Laravel</div>
+              <div class="tool-role">Primary Backend Stack</div>
+            </td>
+            <td><span class="tool-version">JS / PHP</span></td>
+            <td class="tool-desc">
+              <strong>Node.js</strong> (JavaScript runtime) or <strong>Laravel</strong> (PHP MVC framework) used to build all RESTful API endpoints, handle server-side business logic, middleware, and MVC architecture for the platform.
+              <div class="libs-block orange">
+                <div class="libs-header">📦 Libraries Included</div>
+                <div class="lib-item"><strong>Bcrypt / Hash</strong> — Industry-standard library for <em>secure password hashing</em>. All user passwords are hashed before storage using bcrypt's adaptive salt rounds, making them irreversible and brute-force resistant.</div>
+                <div class="lib-item"><strong>JWT (JSON Web Tokens)</strong> — Stateless token-based authentication mechanism. Upon successful login, a signed JWT is issued and attached to every subsequent request header for <em>secure session management</em> without server-side sessions.</div>
+                <div class="lib-item"><strong>Multer / Storage Facade (Laravel)</strong> — Middleware for handling <em>multipart/form-data file uploads</em>. Manages student task file submissions (PDFs, ZIPs, documents), validates MIME types, enforces file size limits, and stores files to the server filesystem or cloud storage.</div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🐘</span> PHP</div>
+              <div class="tool-role">Core Backend Language</div>
+            </td>
+            <td><span class="tool-version">v8.x</span></td>
+            <td class="tool-desc">
+              Core language for <strong>server-side processing</strong> in the Laravel stack. Handles HTTP request/response cycles, middleware pipeline, authentication logic, ORM object mapping, and server-side business rule enforcement.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🐍</span> FastAPI</div>
+              <div class="tool-role">Active Deployment API (Python)</div>
+            </td>
+            <td><span class="tool-version">Python</span></td>
+            <td class="tool-desc">
+              High-performance Python web framework powering the <strong>current live deployment</strong> (50+ REST routes). Handles all platform features including AI integration, notifications, gamification, and file management via Uvicorn ASGI on Railway cloud.
+              <div class="libs-block">
+                <div class="libs-header">📦 Libraries Included</div>
+                <div class="lib-item"><strong>Python-Jose (JWT)</strong> — JWT token generation and verification for secure authentication across all API requests.</div>
+                <div class="lib-item"><strong>Passlib / Bcrypt</strong> — Secure password hashing and verification using bcrypt algorithm with configurable salt rounds.</div>
+                <div class="lib-item"><strong>Python-Multipart</strong> — Handles multipart file uploads for student task submission endpoints.</div>
+                <div class="lib-item"><strong>google-generativeai</strong> — Google Gemini AI SDK for conversational assistant, meeting summarization, and team health scoring features.</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── SECTION 3: Database ── -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <div>
+          <div class="section-title">Database &amp; Connectivity</div>
+          <div class="section-subtitle">Database engine, ORM libraries, schema design, and data access layers</div>
+        </div>
+      </div>
+
+      <table class="tool-table">
+        <thead>
+          <tr>
+            <th>Tool / Technology</th>
+            <th>Version / Tag</th>
+            <th>Role, Purpose &amp; Included Libraries</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🗄️</span> MySQL</div>
+              <div class="tool-role">Database Engine (Standard)</div>
+            </td>
+            <td><span class="tool-version">v8.x</span></td>
+            <td class="tool-desc">
+              Industry-standard open-source <strong>Relational Database Management System (RDBMS)</strong> recommended for production deployments. Stores all user accounts, project metadata, task submissions, grades, feedback, notifications, and meeting records with full ACID compliance and referential integrity.
+              <div class="libs-block green">
+                <div class="libs-header">📦 Libraries Included</div>
+                <div class="lib-item"><strong>Sequelize ORM</strong> (Node.js) — Promise-based ORM for Node.js enabling interaction with MySQL using JavaScript objects instead of raw SQL. Supports model definition, associations (hasMany, belongsTo), migrations, and query building.</div>
+                <div class="lib-item"><strong>Eloquent ORM</strong> (Laravel/PHP) — Laravel's built-in Active Record ORM. Maps database tables to PHP model classes with fluent query builder, relationship methods, and automatic timestamps for all project entities.</div>
+                <div class="lib-item"><strong>MySQL2</strong> (Node.js driver) — Fast, modern MySQL driver with Promise support used as the underlying database connector for Sequelize in Node.js environments.</div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🪶</span> SQLite</div>
+              <div class="tool-role">Embedded Database (Active Deployment)</div>
+            </td>
+            <td><span class="tool-version">v3</span></td>
+            <td class="tool-desc">
+              Lightweight, serverless SQL database used in the <strong>current active deployment</strong> on Railway cloud. Stores the same relational schema as MySQL (13 tables) with zero configuration overhead. Ideal for cloud hosting environments without a dedicated database server.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🔗</span> SQLAlchemy ORM</div>
+              <div class="tool-role">Python Database Mapper (FastAPI)</div>
+            </td>
+            <td><span class="tool-version">v2</span></td>
+            <td class="tool-desc">
+              Python ORM defining <strong>database models as Python classes</strong>. Abstracts raw SQL, handles entity relationships (one-to-many, many-to-many via association tables), and auto-generates all 13 tables via <code>Base.metadata.create_all()</code> on server startup.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">📐</span> ERD Modeling</div>
+              <div class="tool-role">Schema Design &amp; Analysis</div>
+            </td>
+            <td><span class="tool-version">Design Tool</span></td>
+            <td class="tool-desc">
+              Used for <strong>designing the relational database schema</strong> before implementation. ERDs with Crow's Foot Notation document all tables, primary/foreign keys, and 1:N cardinality rules to ensure data integrity and normalization compliance.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── SECTION 4: Dev Tools ── -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <div>
+          <div class="section-title">Development &amp; Productivity Tools</div>
+          <div class="section-subtitle">IDE, testing, local environment, and version control toolchain</div>
+        </div>
+      </div>
+
+      <table class="tool-table">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>Category</th>
+            <th>Role &amp; Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">💻</span> Visual Studio Code</div>
+              <div class="tool-role">Primary IDE</div>
+            </td>
+            <td><span class="badge badge-primary">IDE</span></td>
+            <td class="tool-desc">
+              The <strong>primary Integrated Development Environment (IDE)</strong> for all frontend and backend development. Used with extensions including ESLint, Prettier, Python, Tailwind CSS IntelliSense, and GitLens for code quality, formatting, and repository management.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">📮</span> Postman</div>
+              <div class="tool-role">API Testing Tool</div>
+            </td>
+            <td><span class="badge badge-orange">Testing</span></td>
+            <td class="tool-desc">
+              Used extensively for <strong>API endpoint testing, debugging, and documentation</strong>. All 50+ REST API endpoints were tested through Postman collections before frontend integration. Validates request/response formats, authentication tokens, and error handling behaviors.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🖥️</span> XAMPP / Laragon</div>
+              <div class="tool-role">Local Server Environment</div>
+            </td>
+            <td><span class="badge badge-grey">Local Dev</span></td>
+            <td class="tool-desc">
+              Provides a <strong>local development server environment</strong> with Apache, MySQL, and PHP pre-configured. <strong>XAMPP</strong> offers cross-platform support while <strong>Laragon</strong> provides a lighter, faster alternative for Windows with automatic virtual hosts and quick database management.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🌿</span> Git</div>
+              <div class="tool-role">Version Control System</div>
+            </td>
+            <td><span class="badge badge-green">VCS</span></td>
+            <td class="tool-desc">
+              Distributed <strong>version control system</strong> for tracking all source code changes throughout the project lifecycle. Enables branching strategies, commit history, and rollback capabilities. All team members collaborate through Git workflows (feature branches, pull requests, merging).
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🐙</span> GitHub</div>
+              <div class="tool-role">Remote Repository</div>
+            </td>
+            <td><span class="badge badge-green">VCS</span></td>
+            <td class="tool-desc">
+              Cloud-based platform for <strong>source code hosting and collaborative development</strong>. The UniTrack AI repository stores all frontend and backend source code. Also serves as the deployment trigger for Vercel (frontend auto-deploy on push) and Railway (backend continuous deployment).
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── SECTION 5: System Analysis ── -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <div>
+          <div class="section-title">System Analysis &amp; Design</div>
+          <div class="section-subtitle">UML diagrams, system modeling, and documentation tools</div>
+        </div>
+      </div>
+
+      <table class="tool-table">
+        <thead>
+          <tr>
+            <th>Diagram / Tool</th>
+            <th>Category</th>
+            <th>Role &amp; Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🔷</span> ERD (Crow's Foot)</div>
+              <div class="tool-role">Data Modeling</div>
+            </td>
+            <td><span class="badge badge-primary">UML / DM</span></td>
+            <td class="tool-desc">
+              Entity Relationship Diagram using <strong>Crow's Foot Notation</strong> documenting all database tables (users, roles, projects, tasks, notifications), primary/foreign keys, and 1:N cardinality rules. Essential for ensuring data integrity in the relational schema.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">👤</span> Use Case Diagram</div>
+              <div class="tool-role">Requirements Analysis</div>
+            </td>
+            <td><span class="badge badge-primary">UML</span></td>
+            <td class="tool-desc">
+              Captures all <strong>functional requirements and actor interactions</strong> with the system. Documents 8 use cases across 3 actors (Student, Supervisor, Admin) including Authentication, Task Upload, Grade Submission, User Management, and Report Generation.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">📊</span> Activity Diagram</div>
+              <div class="tool-role">Workflow Modeling</div>
+            </td>
+            <td><span class="badge badge-primary">UML</span></td>
+            <td class="tool-desc">
+              Models <strong>step-by-step process flows</strong> using swimlanes for each actor (Student, System, Supervisor). Documents the complete task submission workflow from upload through validation, supervisor review, approval/rejection decision, and final grading.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">📨</span> Sequence Diagram</div>
+              <div class="tool-role">Interaction Modeling</div>
+            </td>
+            <td><span class="badge badge-primary">UML</span></td>
+            <td class="tool-desc">
+              Illustrates <strong>time-ordered message exchanges</strong> between system components. The Task Submission sequence shows interactions between Student UI, API Controller, Task Service, Database, and Notification Service — making the system's runtime behavior explicit.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🔷</span> Class Diagram</div>
+              <div class="tool-role">OOP Structure</div>
+            </td>
+            <td><span class="badge badge-primary">UML</span></td>
+            <td class="tool-desc">
+              Defines the <strong>object-oriented structure</strong> of the system: User base class with Student, Supervisor, and Admin subclasses (inheritance), plus Project and Task with their attributes and methods. Guides the backend model definitions.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🌊</span> DFD (Level 0 &amp; 1)</div>
+              <div class="tool-role">Data Flow Analysis</div>
+            </td>
+            <td><span class="badge badge-purple">DFD</span></td>
+            <td class="tool-desc">
+              <strong>Data Flow Diagrams</strong> document how data moves through the system. Level 0 (Context) shows the system as a single process with three external entities. Level 1 decomposes into four core processes: Authentication, Project Management, Task Submission, and Grading — each with their associated data stores and flows.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🖊️</span> Lucidchart / Draw.io</div>
+              <div class="tool-role">Diagramming Tool</div>
+            </td>
+            <td><span class="badge badge-grey">Design Tool</span></td>
+            <td class="tool-desc">
+              Professional web-based <strong>diagramming tools</strong> used to create all UML, DFD, architecture, and flowchart diagrams in this documentation. Support UML 2.5 standard notation, export to SVG/PDF, and collaborative editing for team environments.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🏗️</span> 3-Tier Architecture</div>
+              <div class="tool-role">System Architecture</div>
+            </td>
+            <td><span class="badge badge-grey">Architecture</span></td>
+            <td class="tool-desc">
+              Documents the <strong>three-tier system architecture</strong>: Presentation Tier (React.js browser client), Application Tier (FastAPI server on Railway), and Data Tier (SQLite database). Confirms clear separation of concerns and defines inter-tier communication protocols (REST API over HTTPS, SQLAlchemy ORM).
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="tool-name"><span class="tool-icon">🚀</span> Deployment Diagram</div>
+              <div class="tool-role">Infrastructure Design</div>
+            </td>
+            <td><span class="badge badge-grey">Architecture</span></td>
+            <td class="tool-desc">
+              Maps the <strong>physical deployment topology</strong>: Client Browser (React SPA) → Vercel CDN (static files, HTTPS) → Railway App Server (FastAPI + Python) → SQLite database file, with an external connection to the Google Gemini AI API.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── VISUAL TECH STACK SUMMARY ── -->
+    <div class="sep"></div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">✦</div>
+        <div>
+          <div class="section-title">Technology Stack at a Glance</div>
+          <div class="section-subtitle">Quick-reference summary of all primary tools by category</div>
+        </div>
+      </div>
+
+      <div class="stack-grid">
+        <div class="stack-pill">
+          <div class="sp-icon">⚛️</div>
+          <div class="sp-name">React.js</div>
+          <div class="sp-cat">Frontend</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🎨</div>
+          <div class="sp-name">Tailwind CSS</div>
+          <div class="sp-cat">Styling</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">⚡</div>
+          <div class="sp-name">Vite</div>
+          <div class="sp-cat">Build Tool</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">📜</div>
+          <div class="sp-name">JavaScript</div>
+          <div class="sp-cat">Frontend Logic</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🔀</div>
+          <div class="sp-name">React Router</div>
+          <div class="sp-cat">Routing</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🐍</div>
+          <div class="sp-name">FastAPI</div>
+          <div class="sp-cat">Backend API</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🟢</div>
+          <div class="sp-name">Node.js</div>
+          <div class="sp-cat">Alt. Backend</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🐘</div>
+          <div class="sp-name">PHP / Laravel</div>
+          <div class="sp-cat">Alt. Backend</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🤖</div>
+          <div class="sp-name">Gemini AI</div>
+          <div class="sp-cat">AI Layer</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🗄️</div>
+          <div class="sp-name">MySQL</div>
+          <div class="sp-cat">Database</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🪶</div>
+          <div class="sp-name">SQLite</div>
+          <div class="sp-cat">Database</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🔗</div>
+          <div class="sp-name">SQLAlchemy</div>
+          <div class="sp-cat">ORM</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">💻</div>
+          <div class="sp-name">VS Code</div>
+          <div class="sp-cat">IDE</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">📮</div>
+          <div class="sp-name">Postman</div>
+          <div class="sp-cat">API Testing</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🖥️</div>
+          <div class="sp-name">XAMPP</div>
+          <div class="sp-cat">Local Server</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🌿</div>
+          <div class="sp-name">Git</div>
+          <div class="sp-cat">Version Control</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🐙</div>
+          <div class="sp-name">GitHub</div>
+          <div class="sp-cat">Code Hosting</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🔷</div>
+          <div class="sp-name">Lucidchart</div>
+          <div class="sp-cat">UML / DFD</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">☁️</div>
+          <div class="sp-name">Vercel</div>
+          <div class="sp-cat">Frontend Deploy</div>
+        </div>
+        <div class="stack-pill">
+          <div class="sp-icon">🚂</div>
+          <div class="sp-name">Railway</div>
+          <div class="sp-cat">Backend Deploy</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /doc-body -->
+
+  <!-- ══════════ DOCUMENT FOOTER ══════════ -->
+  <div class="doc-footer">
+    <div class="fl">
+      <strong>UniTrack AI</strong> — Academic Project Tracking Platform<br>
+      Graduation Project Technical Documentation · April 2026
+    </div>
+    <div class="fr">
+      Technical Stack Reference v1.0<br>
+      5 Categories · 17+ Tools &amp; Frameworks
+    </div>
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>

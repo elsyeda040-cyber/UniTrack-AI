@@ -41,12 +41,9 @@ function generateActivityLog(users, teams) {
     });
   }
 
-  actions.push(
-    { id: 'log-1', type: 'login', actor: 'Admin', target: 'النظام', detail: 'دخول للوحة الإدارة', time: makeTime(5) },
-    { id: 'log-2', type: 'settings', actor: 'Admin', target: 'الإعدادات', detail: 'تحديث إعدادات النظام', time: makeTime(30) },
-    { id: 'log-3', type: 'user_deleted', actor: 'Admin', target: 'مستخدم محذوف', detail: 'تم حذف حساب مستخدم', time: makeTime(95) },
-    { id: 'log-4', type: 'login', actor: 'دكتور محمد', target: 'النظام', detail: 'دخول بوابة المشرف', time: makeTime(180) },
-  );
+  // actions.push(
+  //  { id: 'log-1', type: 'login', actor: 'Admin', target: 'النظام', detail: 'دخول للوحة الإدارة', time: makeTime(5) },
+  // );
 
   return actions.sort((a, b) => new Date(b.time) - new Date(a.time));
 }

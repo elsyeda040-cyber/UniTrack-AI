@@ -22,6 +22,7 @@ export default function LoginPage() {
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role.key);
+    setEmail(role.defaultEmail);
     setError('');
   };
 
@@ -117,12 +118,6 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-4">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm font-medium border border-red-100 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></span>
-                {error}
-              </div>
-            )}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">University Email</label>
               <input

@@ -22,11 +22,10 @@ export default function ProfessorTeam() {
   const fetchData = async () => {
     try {
       const [tRes, tasksRes] = await Promise.all([
-        teamService.getAll(), // Professor can see all teams then filter or there should be a getTeam(id)
+        teamService.getTeam(teamId),
         teamService.getTasks(teamId)
       ]);
-      const foundTeam = tRes.data.find(t => t.id === teamId);
-      setTeam(foundTeam);
+      setTeam(tRes.data);
       setTasks(tasksRes.data);
     } catch (err) {
       console.error("Failed to fetch team data", err);
@@ -38,11 +37,18 @@ export default function ProfessorTeam() {
   const addTask = async () => {
     if (!newTask.title) return;
     try {
-      // Logic for adding task through API would go here
-      // For now, let's assume we can update task status or similar
+      await teamService.createTask(teamId, { 
+        ...newTask, 
+        status: 'todo' 
+      });
       setShowAddTask(false);
+      setNewTask({ title: '', description: '', deadline: '', color: '#3b82f6' });
       fetchData();
-    } catch (err) { alert("Failed to add task"); }
+      alert("Task created successfully!");
+    } catch (err) { 
+      console.error(err);
+      alert("Failed to add task"); 
+    }
   };
 
   const statusCols = ['todo', 'in_progress', 'completed'];
@@ -50,18 +56,26 @@ export default function ProfessorTeam() {
   const statusIcon = { todo: Circle, in_progress: Clock, completed: CheckCircle2 };
   const statusColor = { todo: 'text-slate-400', in_progress: 'text-amber-500', completed: 'text-emerald-500' };
 
-  const handleSaveEvaluation = (studentId) => {
+  const handleSaveEvaluation = async (studentId) => {
     if (!scoreInput) return;
-    team.students = team.students.map(s => 
-      s.id === studentId ? { ...s, score: parseInt(scoreInput) } : s
-    );
-    setSaveSuccess(true);
-    setTimeout(() => {
-      setSaveSuccess(false);
-      setSelectedStudent(null);
-      setScoreInput('');
-      setFeedbackInput('');
-    }, 1500);
+    try {
+      await teamService.updateStudentEvaluation(studentId, { 
+        score: parseInt(scoreInput), 
+        feedback: feedbackInput 
+      });
+      
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setSelectedStudent(null);
+        setScoreInput('');
+        setFeedbackInput('');
+        fetchData();
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save evaluation");
+    }
   };
 
   if (loading || !team) return (
@@ -77,7 +91,7 @@ export default function ProfessorTeam() {
         <Link to="/professor" className="btn-secondary text-sm"><ArrowLeft className="w-4 h-4" /> Back</Link>
         <div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-white">{team.emoji} {team.name}</h2>
-          <p className="text-sm text-slate-500">{team.projectTitle}</p>
+          <p className="text-sm text-slate-500">{team.project_title}</p>
         </div>
         <button onClick={() => setShowAddTask(true)} className="ml-auto btn-primary text-sm">
           <Plus className="w-4 h-4" /> Add Task

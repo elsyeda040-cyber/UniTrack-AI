@@ -7,18 +7,11 @@ import {
   ChevronUp, X, Send, Sparkles, Loader2, CheckSquare, Clock, Copy,
   Layout, LayoutGrid, Share2, Link2, Wifi, Bell, Lock, ScreenShare,
   UserX, VolumeX, Volume2, Radio, UserPlus, AlertTriangle, Check,
-  StopCircle, Play, Layers, BarChart2, ChevronDown, Crown, Eye
+  StopCircle, Play, Layers, BarChart2, ChevronDown, Crown, Eye,
+  Edit2, Trash2, MoreVertical, CheckCircle2
 } from 'lucide-react';
 
-const MOCK_PARTICIPANTS = [
-  { id: 1, name: 'Dr. Ahmed Hassan', role: 'professor', color: '#4f46e5', initials: 'AH', muted: false, videoOn: true, speaking: true, hand: false, waiting: false },
-  { id: 2, name: 'Mohamed Ali', role: 'student', color: '#7c3aed', initials: 'MA', muted: true, videoOn: true, speaking: false, hand: true, waiting: false },
-  { id: 3, name: 'Sara Ibrahim', role: 'student', color: '#0891b2', initials: 'SI', muted: false, videoOn: false, speaking: false, hand: false, waiting: false },
-  { id: 4, name: 'Omar Khaled', role: 'student', color: '#059669', initials: 'OK', muted: true, videoOn: true, speaking: false, hand: false, waiting: false },
-  { id: 5, name: 'Nour Tarek', role: 'student', color: '#d97706', initials: 'NT', muted: false, videoOn: true, speaking: false, hand: false, waiting: false },
-  { id: 6, name: 'Youssef Samir', role: 'student', color: '#dc2626', initials: 'YS', muted: true, videoOn: false, speaking: false, hand: false, waiting: false },
-  { id: 7, name: 'Laila Mostafa', role: 'student', color: '#be185d', initials: 'LM', muted: false, videoOn: true, speaking: false, hand: false, waiting: true },
-];
+const MOCK_PARTICIPANTS = []; // Removed for production zero slate
 
 const REACTIONS = [
   { emoji: '👍', label: 'Thumbs Up' }, { emoji: '❤️', label: 'Heart' },
@@ -27,11 +20,7 @@ const REACTIONS = [
   { emoji: '🙋', label: 'Raise Hand' }, { emoji: '🤔', label: 'Thinking' },
 ];
 
-const INIT_CHAT = [
-  { id: 1, sender: 'Dr. Ahmed Hassan', color: '#4f46e5', initials: 'AH', message: 'Welcome everyone! Let\'s start the session.', time: '3:00 PM', role: 'professor' },
-  { id: 2, sender: 'Mohamed Ali', color: '#7c3aed', initials: 'MA', message: 'Good morning doctor! 👋', time: '3:01 PM', role: 'student' },
-  { id: 3, sender: 'Sara Ibrahim', color: '#0891b2', initials: 'SI', message: 'Can you share the slides please?', time: '3:02 PM', role: 'student' },
-];
+const INIT_CHAT = []; // Removed for production zero slate
 
 // ── Waiting Room Banner ──
 function WaitingBanner({ count, onAdmit }) {
@@ -338,7 +327,18 @@ export default function MeetingAssistant() {
 
   const [phase, setPhase] = useState('join');
   const [meetingInfo, setMeetingInfo] = useState(null);
-  const [participants, setParticipants] = useState(MOCK_PARTICIPANTS);
+  const [participants, setParticipants] = useState([{
+    id: user?.id || 1,
+    name: user?.name || 'You',
+    role: user?.role || 'student',
+    color: '#2D8CFF',
+    initials: (user?.name || 'Y').charAt(0).toUpperCase(),
+    muted: false,
+    videoOn: true,
+    speaking: false,
+    hand: false,
+    waiting: false
+  }]);
 
   // My controls
   const [muted, setMuted] = useState(false);
@@ -368,11 +368,17 @@ export default function MeetingAssistant() {
   const [showPoll, setShowPoll] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
   const [showMuteConfirm, setShowMuteConfirm] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // AI
   const [transcript, setTranscript] = useState('');
   const [aiSummary, setAiSummary] = useState('');
   const [generatingSummary, setGeneratingSummary] = useState(false);
+
+  // Chat Management States
+  const [editingChatMsgId, setEditingChatMsgId] = useState(null);
+  const [editChatValue, setEditChatValue] = useState("");
+  const [activeChatMenuId, setActiveChatMenuId] = useState(null);
 
   // Timer
   const [elapsed, setElapsed] = useState(0);
@@ -460,6 +466,40 @@ export default function MeetingAssistant() {
     }
   };
 
+  const handleUpdateChat = async (msgId) => {
+    if (!editChatValue.trim() || !user) return;
+    try {
+      // Optimistic update
+      setChatMessages(prev => prev.map(m => m.id === msgId ? { ...m, message: editChatValue } : m));
+      setEditingChatMsgId(null);
+      if (user?.teamId) {
+        await teamService.updateMessage(user.teamId, msgId, { 
+          sender_id: user.id, 
+          text: editChatValue,
+          team_id: user.teamId,
+          type: 'text'
+        });
+      }
+    } catch (err) {
+      console.error("Failed to update message", err);
+      alert("Failed to update message.");
+    }
+  };
+
+  const handleDeleteChat = async (msgId) => {
+    if (!window.confirm("Delete this message?") || !user) return;
+    try {
+      // Optimistic delete
+      setChatMessages(prev => prev.filter(m => m.id !== msgId));
+      if (user?.teamId) {
+        await teamService.deleteMessage(user.teamId, msgId, user.id);
+      }
+    } catch (err) {
+      console.error("Failed to delete message", err);
+      alert("Failed to delete message.");
+    }
+  };
+
   const handleReaction = (emoji) => {
     const id = Date.now();
     setActiveReactions(prev => [...prev, { id, emoji, x: Math.random() * 60 + 20 }]);
@@ -483,7 +523,54 @@ export default function MeetingAssistant() {
       setParticipants(prev => prev.map(p => p.role !== 'professor' ? { ...p, muted: true } : p));
       setShowMuteConfirm(false);
       setShowMore(false);
-      alert("All participants have been muted successfully.");
+      
+      if (isProfessor) setMuted(false); 
+
+      // Alert participants (simulated via global toast or simple alert)
+      alert("Host has muted all participants.");
+    }
+  };
+
+  const toggleMyMute = () => {
+    const newState = !muted;
+    setMuted(newState);
+    setParticipants(prev => prev.map(p => p.id === (user?.id || 1) ? { ...p, muted: newState } : p));
+  };
+
+  const toggleMyVideo = () => {
+    const newState = !videoOn;
+    setVideoOn(newState);
+    setParticipants(prev => prev.map(p => p.id === (user?.id || 1) ? { ...p, videoOn: newState } : p));
+  };
+
+  const handleStartRecording = async () => {
+    if (!recording) {
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        window.currentRecorder = mediaRecorder;
+        const chunks = [];
+        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `meeting_record_${Date.now()}.webm`;
+          a.click();
+        };
+        mediaRecorder.start();
+        setRecording(true);
+      } catch (err) {
+        console.error("Screen recording failed:", err);
+        alert("Failed to start recording. Please ensure tab/screen share permissions are granted.");
+      }
+    } else {
+      if (window.currentRecorder) {
+        window.currentRecorder.stop();
+        window.currentRecorder.stream.getTracks().forEach(t => t.stop());
+      }
+      setRecording(false);
     }
   };
 
@@ -516,8 +603,21 @@ export default function MeetingAssistant() {
   };
 
   const copyMeetingId = () => {
-    navigator.clipboard.writeText(meetingInfo?.id || '869-0437-1789');
-    alert('Meeting ID copied!');
+    const id = meetingInfo?.id || '869-0437-1789';
+    navigator.clipboard.writeText(id).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(err => {
+      console.error("Copy failed:", err);
+      const input = document.createElement('input');
+      input.value = id;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   const waitingCount = participants.filter(p => p.waiting).length;
@@ -593,11 +693,11 @@ export default function MeetingAssistant() {
           </button>
           <button
             onClick={copyMeetingId}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-white text-xs px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all"
+            className={`flex items-center gap-1.5 transition-all text-xs px-3 py-1.5 rounded-lg ${copied ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
           >
-            <Lock className="w-3.5 h-3.5" />
-            {meetingInfo?.id || '869-0437-1789'}
-            <Copy className="w-3 h-3 ml-1 opacity-50" />
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+            {copied ? 'Copied ID' : (meetingInfo?.id || '869-0437-1789')}
+            {!copied && <Copy className="w-3 h-3 ml-1 opacity-50" />}
           </button>
           <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Secure Connection" />
         </div>
@@ -689,19 +789,69 @@ export default function MeetingAssistant() {
             {/* CHAT */}
             {rightPanel === 'chat' && (
               <>
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4" onClick={() => setActiveChatMenuId(null)}>
                   {chatMessages.map(msg => (
-                    <div key={msg.id} className="flex gap-2.5">
+                    <div key={msg.id} className="flex gap-2.5 group relative">
                       <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold" style={{ background: msg.color }}>
                         {msg.initials}
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2">
                           <span className="text-white text-xs font-bold">{msg.sender}</span>
                           {msg.role === 'professor' && <Crown className="w-3 h-3 text-yellow-400" />}
                           <span className="text-slate-500 text-[10px]">{msg.time}</span>
                         </div>
-                        <p className="text-slate-300 text-sm mt-0.5 leading-relaxed bg-white/5 px-3 py-2 rounded-xl rounded-tl-none">{msg.message}</p>
+
+                        {editingChatMsgId === msg.id ? (
+                          <div className="mt-1 space-y-2 bg-[#1C1C1E] p-2 rounded-xl border border-white/10" onClick={e => e.stopPropagation()}>
+                            <textarea
+                              value={editChatValue}
+                              onChange={e => setEditChatValue(e.target.value)}
+                              className="w-full bg-transparent text-white text-sm outline-none resize-none"
+                              rows={2}
+                              autoFocus
+                            />
+                            <div className="flex justify-end gap-2">
+                              <button onClick={() => setEditingChatMsgId(null)} className="px-2 py-1 text-[10px] text-slate-400 hover:text-white">Cancel</button>
+                              <button onClick={() => handleUpdateChat(msg.id)} className="px-2 py-1 bg-[#2D8CFF] rounded-lg text-white text-[10px] font-bold flex items-center gap-1">
+                                Save <CheckCircle2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative group/bubble">
+                            <p className="text-slate-300 text-sm mt-0.5 leading-relaxed bg-white/5 px-3 py-2 rounded-xl rounded-tl-none">{msg.message}</p>
+                            
+                            {/* Message Actions */}
+                            {msg.sender === (user?.name || 'You') && !editingChatMsgId && (
+                              <div className="absolute top-1/2 -right-8 -translate-y-1/2 opacity-0 group-hover/bubble:opacity-100 transition-all">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); setActiveChatMenuId(activeChatMenuId === msg.id ? null : msg.id); }}
+                                  className="p-1.5 rounded-full hover:bg-white/10 text-slate-500 hover:text-white"
+                                >
+                                  <MoreVertical className="w-3.5 h-3.5" />
+                                </button>
+                                
+                                {activeChatMenuId === msg.id && (
+                                  <div className="absolute bottom-full right-0 mb-2 bg-[#2A2A2E] border border-white/10 rounded-xl py-1 shadow-2xl z-20 min-w-[100px]" onClick={e => e.stopPropagation()}>
+                                    <button 
+                                      onClick={() => { setEditingChatMsgId(msg.id); setEditChatValue(msg.message); setActiveChatMenuId(null); }}
+                                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-white/5"
+                                    >
+                                      <Edit2 className="w-3 h-3" /> Edit
+                                    </button>
+                                    <button 
+                                      onClick={() => { handleDeleteChat(msg.id); setActiveChatMenuId(null); }}
+                                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-500/10"
+                                    >
+                                      <Trash2 className="w-3 h-3" /> Delete
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -825,7 +975,7 @@ export default function MeetingAssistant() {
         <div className="flex items-center gap-1">
           <div className="flex items-center">
             <button
-              onClick={() => setMuted(m => !m)}
+              onClick={toggleMyMute}
               className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all hover:bg-white/10 ${muted ? 'text-red-400' : 'text-white'}`}
             >
               {muted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
@@ -838,7 +988,7 @@ export default function MeetingAssistant() {
 
           <div className="flex items-center">
             <button
-              onClick={() => setVideoOn(v => !v)}
+              onClick={toggleMyVideo}
               className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all hover:bg-white/10 ${!videoOn ? 'text-red-400' : 'text-white'}`}
             >
               {videoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
@@ -892,7 +1042,7 @@ export default function MeetingAssistant() {
           {/* Professor-only: Record */}
           {isProfessor && (
             <button
-              onClick={() => setRecording(r => !r)}
+              onClick={handleStartRecording}
               className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all hover:bg-white/10 ${recording ? 'text-red-400 bg-red-500/10' : 'text-white'}`}
             >
               <div className="w-5 h-5 flex items-center justify-center">

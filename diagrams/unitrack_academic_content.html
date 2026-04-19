@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniTrack AI — Academic Book Content</title>
+<link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ══════════════════════════════════════════
+   ACADEMIC BOOK STYLES — WHITE PRINT THEME
+   ══════════════════════════════════════════ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  background: #e8ecf0;
+  color: #111;
+  font-size: 14px;
+  line-height: 1.8;
+  padding: 30px 16px 60px;
+}
+
+/* ── Page wrapper ── */
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 60px 64px 70px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.10);
+}
+
+/* ── Cover block ── */
+.book-cover {
+  text-align: center;
+  padding-bottom: 36px;
+  border-bottom: 2px solid #1a3a6b;
+  margin-bottom: 36px;
+}
+.book-cover .univ-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 18px;
+}
+.book-cover h1 {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1a3a6b;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.book-cover .subtitle {
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 22px;
+}
+.book-cover .meta-row {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.book-cover .meta-item {
+  text-align: center;
+}
+.book-cover .meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #888;
+}
+.book-cover .meta-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a3a6b;
+}
+
+/* ── Chapter heading ── */
+.chapter-heading {
+  margin: 44px 0 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #1a3a6b;
+}
+.chapter-heading .ch-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #1a3a6b;
+  margin-bottom: 4px;
+}
+.chapter-heading h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111;
+}
+
+/* ── Section heading ── */
+.section-heading {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a3a6b;
+  margin: 28px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-heading::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: #1a3a6b;
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* ── Body text ── */
+p { color: #222; margin-bottom: 10px; }
+p.lead { font-size: 14.5px; font-weight: 500; color: #111; }
+
+/* ── Database Field List ── */
+.db-table-block {
+  margin: 16px 0 24px;
+  border: 1px solid #d0d7e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.db-table-name {
+  background: #1a3a6b;
+  color: white;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.3px;
+}
+.db-field-row {
+  display: grid;
+  grid-template-columns: 160px 150px 1fr;
+  gap: 0;
+  border-bottom: 1px solid #e8ebef;
+  padding: 8px 18px;
+  font-size: 12.5px;
+  align-items: start;
+}
+.db-field-row:last-child { border-bottom: none; }
+.db-field-row:nth-child(odd) { background: #f7f9fc; }
+.db-field-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #1a3a6b;
+  font-weight: 600;
+}
+.db-field-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #555;
+  font-weight: 500;
+  padding-top: 1px;
+}
+.db-field-desc { color: #333; line-height: 1.6; }
+.db-header-row {
+  display: grid;
+  grid-template-columns: 160px 150px 1fr;
+  background: #eef2f8;
+  padding: 7px 18px;
+  border-bottom: 1px solid #ccd4df;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+}
+.badge-pk {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  padding: 1px 6px; background: #fef3c7; color: #92400e;
+  border: 1px solid #fde68a; border-radius: 3px; margin-left: 4px;
+}
+.badge-fk {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  padding: 1px 6px; background: #eff6ff; color: #1e40af;
+  border: 1px solid #bfdbfe; border-radius: 3px; margin-left: 4px;
+}
+.badge-uq {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  padding: 1px 6px; background: #f0fdf4; color: #166534;
+  border: 1px solid #bbf7d0; border-radius: 3px; margin-left: 4px;
+}
+
+/* ── Code Block ── */
+.code-block {
+  margin: 16px 0 24px;
+  border: 1px solid #d0d7e0;
+  border-radius: 6px;
+  overflow: hidden;
+  page-break-inside: avoid;
+}
+.code-header {
+  background: #f0f4fa;
+  border-bottom: 1px solid #d0d7e0;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.code-header .lang-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #1a3a6b;
+  background: #dbeafe;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.code-header .file-name {
+  font-size: 11px;
+  color: #666;
+  font-family: 'JetBrains Mono', monospace;
+}
+pre {
+  background: #fafbfc;
+  padding: 20px 22px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.2px;
+  line-height: 1.75;
+  color: #1e293b;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+/* Syntax highlight — light theme */
+.k  { color: #0550ae; font-weight: 600; }   /* keyword */
+.fn { color: #8250df; }                       /* function */
+.s  { color: #0a3069; }                       /* string */
+.c  { color: #6e7781; font-style: italic; }  /* comment */
+.n  { color: #953800; }                       /* number */
+.t  { color: #116329; }                       /* type/tag */
+.at { color: #0076c0; }                       /* attribute */
+.op { color: #555; }                           /* operator */
+
+/* ── Testing Table ── */
+.test-table-wrap {
+  margin: 16px 0 24px;
+  border: 1px solid #d0d7e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.test-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.test-table thead tr {
+  background: #1a3a6b;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.test-table thead th {
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-right: 1px solid rgba(255,255,255,.15);
+}
+.test-table thead th:last-child { border-right: none; }
+.test-table tbody td {
+  padding: 10px 14px;
+  vertical-align: top;
+  border-bottom: 1px solid #e8ebef;
+  border-right: 1px solid #e8ebef;
+  color: #222;
+  line-height: 1.6;
+}
+.test-table tbody td:last-child { border-right: none; }
+.test-table tbody tr:last-child td { border-bottom: none; }
+.test-table tbody tr:nth-child(even) td { background: #f7f9fc; }
+.tc-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1a3a6b;
+}
+.pass-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.feature-name {
+  font-weight: 600;
+  color: #111;
+}
+
+/* ── Separator ── */
+.sep {
+  height: 1px;
+  background: #dde2ea;
+  margin: 36px 0;
+}
+
+/* ── Note box ── */
+.note-box {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 5px;
+  padding: 12px 16px;
+  font-size: 12.5px;
+  color: #1e3a8a;
+  margin: 14px 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.note-box strong { color: #1a3a6b; }
+
+/* ── Summary row ── */
+.summary-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 18px 0 4px;
+}
+.summary-cell {
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid #d0d7e0;
+  border-radius: 6px;
+  padding: 12px 16px;
+  text-align: center;
+}
+.summary-cell .s-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a3a6b;
+  display: block;
+}
+.summary-cell .s-label {
+  font-size: 10.5px;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Print button ── */
+.print-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  padding: 11px 22px;
+  background: #1a3a6b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 4px 12px rgba(26,58,107,0.30);
+  z-index: 999;
+}
+.print-btn:hover { background: #0f2a56; }
+
+/* ══  PRINT  ══ */
+@media print {
+  body { background: white; padding: 0; font-size: 12px; }
+  .page { box-shadow: none; border: none; padding: 40px 50px; max-width: 100%; }
+  .print-btn { display: none !important; }
+  .code-block, .db-table-block, .test-table-wrap { page-break-inside: avoid; }
+  .chapter-heading { page-break-before: always; }
+  .chapter-heading:first-of-type { page-break-before: avoid; }
+}
+
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">🖨 Print / Export PDF</button>
+
+<div class="page">
+
+  <!-- ══════════════════════════════════════
+       COVER
+  ══════════════════════════════════════ -->
+  <div class="book-cover">
+    <div class="univ-label">Graduation Project — Academic Documentation</div>
+    <h1>UniTrack AI</h1>
+    <div class="subtitle">
+      A Smart Platform for Monitoring and Evaluating Graduation Projects<br>
+      <strong>System Implementation — Code, Database & Testing</strong>
+    </div>
+    <div class="meta-row">
+      <div class="meta-item">
+        <div class="meta-label">Developer</div>
+        <div class="meta-val">Mohamed El-Sayed Abdel-Khalek Al-Abbasi</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Stack</div>
+        <div class="meta-val">React.js · Node.js/Express · MySQL</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Date</div>
+        <div class="meta-val">April 2026</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       PART 1 — CODE SNIPPETS
+  ══════════════════════════════════════ -->
+  <div class="chapter-heading">
+    <div class="ch-label">Part One</div>
+    <h2>Functional Code Snippets</h2>
+  </div>
+
+  <p class="lead">
+    This section presents the two core code implementations that handle student task submission
+    across the full application stack: the React.js frontend component and the
+    corresponding Node.js/Express backend controller.
+  </p>
+
+
+  <!-- === SNIPPET A === -->
+  <div class="section-heading">Snippet A &mdash; React Component: Student Task Upload</div>
+
+  <p>
+    The <code>TaskUpload</code> component provides the student-facing interface for submitting
+    task deliverables. It uses React Hooks for local state management and the
+    <strong>Axios</strong> library to send a multipart HTTP request to the backend API.
+    Client-side validation enforces allowed file types and the 20&nbsp;MB size ceiling
+    before any network call is made.
+  </p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="lang-badge">JSX — React.js</span>
+      <span class="file-name">src/components/TaskUpload.jsx</span>
+    </div>
+<pre><span class="k">import</span> React, { useState } <span class="k">from</span> <span class="s">'react'</span>;
+<span class="k">import</span> axios <span class="k">from</span> <span class="s">'axios'</span>;
+
+<span class="c">/**
+ * TaskUpload Component
+ * Allows a student to upload a file for a specific task.
+ *
+ * Props:
+ *   taskId   {number}   — ID of the task being submitted.
+ *   onSuccess {Function} — Callback fired after successful upload.
+ */</span>
+<span class="k">const</span> <span class="fn">TaskUpload</span> = ({ taskId, onSuccess }) => {
+
+  <span class="c">// ── Local State ──────────────────────────────────────────</span>
+  <span class="k">const</span> [selectedFile, setSelectedFile] = <span class="fn">useState</span>(<span class="k">null</span>);
+  <span class="k">const</span> [uploading,    setUploading]    = <span class="fn">useState</span>(<span class="k">false</span>);
+  <span class="k">const</span> [progress,     setProgress]     = <span class="fn">useState</span>(<span class="n">0</span>);
+  <span class="k">const</span> [message,      setMessage]      = <span class="fn">useState</span>(<span class="s">''</span>);
+  <span class="k">const</span> [isError,      setIsError]      = <span class="fn">useState</span>(<span class="k">false</span>);
+
+  <span class="c">// Permitted file extensions and corresponding MIME types</span>
+  <span class="k">const</span> ALLOWED_TYPES = [
+    <span class="s">'application/pdf'</span>,
+    <span class="s">'application/msword'</span>,
+    <span class="s">'application/vnd.openxmlformats-officedocument.wordprocessingml.document'</span>,
+    <span class="s">'application/zip'</span>,
+  ];
+  <span class="k">const</span> MAX_SIZE_BYTES = <span class="n">20</span> * <span class="n">1024</span> * <span class="n">1024</span>; <span class="c">// 20 MB</span>
+
+  <span class="c">// ── File Selection Handler ────────────────────────────────</span>
+  <span class="k">const</span> <span class="fn">handleFileChange</span> = (e) => {
+    <span class="k">const</span> file = e.target.files[<span class="n">0</span>];
+    setMessage(<span class="s">''</span>);
+    setIsError(<span class="k">false</span>);
+
+    <span class="k">if</span> (!file) <span class="k">return</span>;
+
+    <span class="k">if</span> (!ALLOWED_TYPES.includes(file.type)) {
+      setMessage(<span class="s">'Invalid file type. Please upload PDF, DOCX, or ZIP.'</span>);
+      setIsError(<span class="k">true</span>);
+      <span class="k">return</span>;
+    }
+    <span class="k">if</span> (file.size > MAX_SIZE_BYTES) {
+      setMessage(<span class="s">'File is too large. Maximum allowed size is 20 MB.'</span>);
+      setIsError(<span class="k">true</span>);
+      <span class="k">return</span>;
+    }
+    setSelectedFile(file);
+    setMessage(<span class="s">`File ready: ${file.name}`</span>);
+  };
+
+  <span class="c">// ── Upload Handler ────────────────────────────────────────</span>
+  <span class="k">const</span> <span class="fn">handleUpload</span> = <span class="k">async</span> () => {
+    <span class="k">if</span> (!selectedFile) {
+      setMessage(<span class="s">'Please select a file before uploading.'</span>);
+      setIsError(<span class="k">true</span>);
+      <span class="k">return</span>;
+    }
+
+    <span class="c">// Build multipart form payload</span>
+    <span class="k">const</span> formData = <span class="k">new</span> <span class="fn">FormData</span>();
+    formData.<span class="fn">append</span>(<span class="s">'taskFile'</span>, selectedFile);
+    formData.<span class="fn">append</span>(<span class="s">'taskId'</span>,   taskId);
+
+    <span class="c">// Retrieve stored JWT token for Authorization header</span>
+    <span class="k">const</span> token = localStorage.<span class="fn">getItem</span>(<span class="s">'auth_token'</span>);
+
+    setUploading(<span class="k">true</span>);
+    setProgress(<span class="n">0</span>);
+
+    <span class="k">try</span> {
+      <span class="k">const</span> response = <span class="k">await</span> axios.<span class="fn">post</span>(
+        <span class="s">`/api/tasks/${taskId}/upload`</span>,
+        formData,
+        {
+          headers: {
+            <span class="s">'Authorization'</span>: <span class="s">`Bearer ${token}`</span>,
+            <span class="s">'Content-Type'</span>:  <span class="s">'multipart/form-data'</span>,
+          },
+          <span class="c">// Track real-time upload progress</span>
+          <span class="fn">onUploadProgress</span>: (event) => {
+            <span class="k">const</span> percent = Math.<span class="fn">round</span>((event.loaded * <span class="n">100</span>) / event.total);
+            <span class="fn">setProgress</span>(percent);
+          },
+        }
+      );
+
+      setMessage(response.data.message || <span class="s">'Task submitted successfully!'</span>);
+      setIsError(<span class="k">false</span>);
+      setSelectedFile(<span class="k">null</span>);
+      <span class="k">if</span> (onSuccess) <span class="fn">onSuccess</span>(response.data);
+
+    } <span class="k">catch</span> (error) {
+      <span class="k">const</span> errMsg = error.response?.data?.message
+        || <span class="s">'Upload failed. Please try again.'</span>;
+      setMessage(errMsg);
+      setIsError(<span class="k">true</span>);
+    } <span class="k">finally</span> {
+      setUploading(<span class="k">false</span>);
+    }
+  };
+
+  <span class="c">// ── Render ────────────────────────────────────────────────</span>
+  <span class="k">return</span> (
+    &lt;<span class="t">div</span> <span class="at">className</span>=<span class="s">"task-upload-container"</span>&gt;
+
+      &lt;<span class="t">h3</span> <span class="at">className</span>=<span class="s">"upload-title"</span>&gt;Submit Task File&lt;/<span class="t">h3</span>&gt;
+
+      &lt;<span class="t">input</span>
+        <span class="at">type</span>=<span class="s">"file"</span>
+        <span class="at">accept</span>=<span class="s">".pdf,.doc,.docx,.zip"</span>
+        <span class="at">onChange</span>={handleFileChange}
+        <span class="at">disabled</span>={uploading}
+        <span class="at">className</span>=<span class="s">"file-input"</span>
+      /&gt;
+
+      {<span class="c">/* Upload progress bar */</span>}
+      {uploading &amp;&amp; (
+        &lt;<span class="t">div</span> <span class="at">className</span>=<span class="s">"progress-bar-wrap"</span>&gt;
+          &lt;<span class="t">div</span>
+            <span class="at">className</span>=<span class="s">"progress-bar-fill"</span>
+            <span class="at">style</span>={{ width: <span class="s">`${progress}%`</span> }}
+          /&gt;
+          &lt;<span class="t">span</span>&gt;{progress}%&lt;/<span class="t">span</span>&gt;
+        &lt;/<span class="t">div</span>&gt;
+      )}
+
+      {<span class="c">/* Status message */</span>}
+      {message &amp;&amp; (
+        &lt;<span class="t">p</span> <span class="at">className</span>={isError ? <span class="s">'msg-error'</span> : <span class="s">'msg-success'</span>}&gt;
+          {message}
+        &lt;/<span class="t">p</span>&gt;
+      )}
+
+      &lt;<span class="t">button</span>
+        <span class="at">onClick</span>={handleUpload}
+        <span class="at">disabled</span>={uploading || !selectedFile}
+        <span class="at">className</span>=<span class="s">"btn-upload"</span>
+      &gt;
+        {uploading ? <span class="s">'Uploading...'</span> : <span class="s">'Upload Task'</span>}
+      &lt;/<span class="t">button</span>&gt;
+
+    &lt;/<span class="t">div</span>&gt;
+  );
+};
+
+<span class="k">export default</span> TaskUpload;
+</pre>
+  </div>
+
+  <div class="note-box">
+    <strong>Key Design Decisions:</strong>
+    Client-side MIME type checking is performed before the API request to improve user experience
+    and reduce unnecessary server load. However, the backend independently validates the file type
+    using server-side checks to prevent MIME spoofing. The JWT token is attached via the
+    <code>Authorization: Bearer &lt;token&gt;</code> header, which the backend middleware verifies
+    on every protected route.
+  </div>
+
+
+  <!-- === SNIPPET B === -->
+  <div class="section-heading">Snippet B &mdash; Node.js / Express: File Upload Controller</div>
+
+  <p>
+    The backend controller receives the multipart request, validates the uploaded file,
+    saves it to the server's file system, persists the file path and task metadata in the
+    MySQL database using <strong>Sequelize ORM</strong>, and returns a structured JSON response.
+    A supervisor notification is dispatched asynchronously after successful save.
+  </p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="lang-badge">JavaScript — Node.js / Express</span>
+      <span class="file-name">controllers/taskController.js</span>
+    </div>
+<pre><span class="k">const</span> multer  = <span class="fn">require</span>(<span class="s">'multer'</span>);
+<span class="k">const</span> path    = <span class="fn">require</span>(<span class="s">'path'</span>);
+<span class="k">const</span> { Task, Notification, Project } = <span class="fn">require</span>(<span class="s">'../models'</span>);
+
+<span class="c">/* ═══════════════════════════════════════════════════════
+   MULTER — FILE STORAGE CONFIGURATION
+   ═══════════════════════════════════════════════════════ */</span>
+
+<span class="k">const</span> storage = multer.<span class="fn">diskStorage</span>({
+
+  <span class="c">// Directory where uploaded files will be stored</span>
+  <span class="fn">destination</span>: (req, file, cb) => {
+    cb(<span class="k">null</span>, <span class="s">'./uploads/tasks/'</span>);
+  },
+
+  <span class="c">// Generate a unique filename to prevent overwrite collisions</span>
+  <span class="fn">filename</span>: (req, file, cb) => {
+    <span class="k">const</span> timestamp = Date.<span class="fn">now</span>();
+    <span class="k">const</span> ext       = path.<span class="fn">extname</span>(file.originalname).<span class="fn">toLowerCase</span>();
+    <span class="k">const</span> safeName  = file.originalname
+      .<span class="fn">replace</span>(ext, <span class="s">''</span>)
+      .<span class="fn">replace</span>(<span class="op">/[^a-zA-Z0-9_\-]/g</span>, <span class="s">'_'</span>);
+    <span class="fn">cb</span>(<span class="k">null</span>, <span class="s">`task_${timestamp}_${safeName}${ext}`</span>);
+  },
+});
+
+<span class="c">// Server-side MIME type whitelist (prevents MIME spoofing)</span>
+<span class="k">const</span> <span class="fn">fileFilter</span> = (req, file, cb) => {
+  <span class="k">const</span> allowed = [
+    <span class="s">'application/pdf'</span>,
+    <span class="s">'application/msword'</span>,
+    <span class="s">'application/vnd.openxmlformats-officedocument.wordprocessingml.document'</span>,
+    <span class="s">'application/zip'</span>,
+  ];
+  <span class="k">if</span> (allowed.<span class="fn">includes</span>(file.mimetype)) {
+    <span class="fn">cb</span>(<span class="k">null</span>, <span class="k">true</span>);   <span class="c">// Accept file</span>
+  } <span class="k">else</span> {
+    <span class="fn">cb</span>(<span class="k">new</span> <span class="fn">Error</span>(<span class="s">'INVALID_TYPE'</span>), <span class="k">false</span>); <span class="c">// Reject file</span>
+  }
+};
+
+<span class="c">// Export the configured upload middleware for route use</span>
+<span class="k">const</span> upload = <span class="fn">multer</span>({
+  storage,
+  fileFilter,
+  limits: { fileSize: <span class="n">20</span> * <span class="n">1024</span> * <span class="n">1024</span> }, <span class="c">// 20 MB cap</span>
+});
+
+
+<span class="c">/* ═══════════════════════════════════════════════════════
+   CONTROLLER — uploadTaskFile
+   Route:  POST /api/tasks/:taskId/upload
+   Access: Authenticated Students only (JWT middleware)
+   ═══════════════════════════════════════════════════════ */</span>
+
+<span class="k">const</span> <span class="fn">uploadTaskFile</span> = <span class="k">async</span> (req, res) => {
+  <span class="k">try</span> {
+
+    <span class="c">// 1. Verify a file was received</span>
+    <span class="k">if</span> (!req.file) {
+      <span class="k">return</span> res.<span class="fn">status</span>(<span class="n">400</span>).<span class="fn">json</span>({
+        success: <span class="k">false</span>,
+        message: <span class="s">'No file provided. Please attach a file and try again.'</span>,
+      });
+    }
+
+    <span class="k">const</span> { taskId }   = req.params;
+    <span class="k">const</span>  studentId   = req.user.id;  <span class="c">// Injected by jwtAuthMiddleware</span>
+
+    <span class="c">// 2. Verify the task belongs to this student</span>
+    <span class="k">const</span> task = <span class="k">await</span> Task.<span class="fn">findOne</span>({
+      where: { id: taskId, student_id: studentId },
+    });
+
+    <span class="k">if</span> (!task) {
+      <span class="k">return</span> res.<span class="fn">status</span>(<span class="n">404</span>).<span class="fn">json</span>({
+        success: <span class="k">false</span>,
+        message: <span class="s">'Task not found or you are not authorized to submit this task.'</span>,
+      });
+    }
+
+    <span class="c">// 3. Reject if the task is already graded (no resubmission)</span>
+    <span class="k">if</span> (task.status === <span class="s">'graded'</span>) {
+      <span class="k">return</span> res.<span class="fn">status</span>(<span class="n">400</span>).<span class="fn">json</span>({
+        success: <span class="k">false</span>,
+        message: <span class="s">'This task has already been graded and cannot be resubmitted.'</span>,
+      });
+    }
+
+    <span class="c">// 4. Save file metadata to the MySQL database</span>
+    <span class="k">await</span> task.<span class="fn">update</span>({
+      file_path:    req.file.path,           <span class="c">// Relative path on server</span>
+      file_name:    req.file.originalname,   <span class="c">// Original filename for display</span>
+      file_size:    req.file.size,           <span class="c">// Size in bytes</span>
+      status:       <span class="s">'submitted'</span>,           <span class="c">// Transition task state machine</span>
+      submitted_at: <span class="k">new</span> <span class="fn">Date</span>(),            <span class="c">// Record submission timestamp</span>
+    });
+
+    <span class="c">// 5. Create a notification for the project supervisor (async)</span>
+    <span class="k">const</span> project = <span class="k">await</span> Project.<span class="fn">findByPk</span>(task.project_id);
+    <span class="k">if</span> (project?.supervisor_id) {
+      Notification.<span class="fn">create</span>({
+        user_id:         project.supervisor_id,
+        message:         <span class="s">`Student ${req.user.name} submitted task: "${task.title}".</span>
+                         <span class="s">Please review the submission.`</span>,
+        type:            <span class="s">'task_submitted'</span>,
+        notifiable_type: <span class="s">'Task'</span>,
+        notifiable_id:   task.id,
+        is_read:         <span class="k">false</span>,
+      }).<span class="fn">catch</span>(console.error); <span class="c">// Non-blocking — do not fail the request</span>
+    }
+
+    <span class="c">// 6. Return structured success response</span>
+    <span class="k">return</span> res.<span class="fn">status</span>(<span class="n">200</span>).<span class="fn">json</span>({
+      success:  <span class="k">true</span>,
+      message:  <span class="s">'Task file uploaded and saved successfully.'</span>,
+      data: {
+        task_id:      task.id,
+        file_name:    req.file.originalname,
+        file_size_kb: <span class="fn">Math.round</span>(req.file.size / <span class="n">1024</span>),
+        status:       task.status,
+        submitted_at: task.submitted_at,
+      },
+    });
+
+  } <span class="k">catch</span> (error) {
+    console.<span class="fn">error</span>(<span class="s">'[uploadTaskFile ERROR]'</span>, error.message);
+    <span class="k">return</span> res.<span class="fn">status</span>(<span class="n">500</span>).<span class="fn">json</span>({
+      success: <span class="k">false</span>,
+      message: <span class="s">'An internal server error occurred. Please try again later.'</span>,
+    });
+  }
+};
+
+module.exports = { upload, uploadTaskFile };
+</pre>
+  </div>
+
+  <div class="note-box">
+    <strong>Route Registration Example:</strong>
+    In the Express router file, the controller is wired as:
+    <code>router.post('/tasks/:taskId/upload', jwtAuth, upload.single('taskFile'), uploadTaskFile);</code>
+    The <code>jwtAuth</code> middleware verifies the token and attaches <code>req.user</code> before
+    the controller runs.
+  </div>
+
+
+  <div class="sep"></div>
+
+
+  <!-- ══════════════════════════════════════
+       PART 2 — DATABASE TABLES
+  ══════════════════════════════════════ -->
+  <div class="chapter-heading">
+    <div class="ch-label">Part Two</div>
+    <h2>Database Table Descriptions</h2>
+  </div>
+
+  <p class="lead">
+    The following tables form the core of the UniTrack AI MySQL relational database.
+    The schema is normalized to Third Normal Form (3NF) to eliminate redundancy
+    and enforce referential integrity.
+  </p>
+
+
+  <!-- TABLE: users -->
+  <div class="section-heading">Table 1 — <code>users</code></div>
+  <p>Stores all platform accounts. Role-based access is controlled via a foreign key link to the <code>roles</code> table, enabling the system to serve four distinct user types from a single entity.</p>
+
+  <div class="db-table-block">
+    <div class="db-table-name">TABLE: users</div>
+    <div class="db-header-row">
+      <span>Field</span><span>Type</span><span>Description</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">id <span class="badge-pk">PK</span></span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>AUTO_INCREMENT</span>
+      <span class="db-field-desc">Unique numeric identifier for each user. Referenced as a foreign key throughout all other tables that associate data with a specific user.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">name</span>
+      <span class="db-field-type">VARCHAR(255)<br>NOT NULL</span>
+      <span class="db-field-desc">The user's full legal name, displayed across dashboards, task views, and report outputs.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">email <span class="badge-uq">UNIQUE</span></span>
+      <span class="db-field-type">VARCHAR(255)<br>NOT NULL</span>
+      <span class="db-field-desc">Primary login identifier and contact address. Enforced unique at the database level to prevent duplicate account registration.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">password</span>
+      <span class="db-field-type">VARCHAR(255)<br>NOT NULL</span>
+      <span class="db-field-desc">Bcrypt-hashed user password. Raw passwords are never stored; hashing is performed at the application layer prior to any database write.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">role_id <span class="badge-fk">FK</span></span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>NOT NULL</span>
+      <span class="db-field-desc">Foreign key referencing <code>roles.id</code>. Determines which dashboard, routes, and actions are accessible to the user (student, supervisor, assistant, admin).</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">is_active</span>
+      <span class="db-field-type">TINYINT(1)<br>DEFAULT 1</span>
+      <span class="db-field-desc">Account activation flag. When set to <code>0</code> by an administrator, the user cannot log in. Supports suspension without permanent deletion of audit history.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">last_login_at</span>
+      <span class="db-field-type">DATETIME<br>NULLABLE</span>
+      <span class="db-field-desc">Timestamp of the user's most recent successful login. Used by the admin panel to identify inactive accounts.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">created_at</span>
+      <span class="db-field-type">TIMESTAMP</span>
+      <span class="db-field-desc">Record creation timestamp, set automatically by the database engine at insert time.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">updated_at</span>
+      <span class="db-field-type">TIMESTAMP</span>
+      <span class="db-field-desc">Automatically updated to the current time whenever any field in the user record is modified.</span>
+    </div>
+  </div>
+
+
+  <!-- TABLE: projects -->
+  <div class="section-heading">Table 2 — <code>projects</code></div>
+  <p>Represents graduation projects registered on the platform. Each project is supervised by one faculty member and may optionally include a teaching assistant. The <code>status</code> field governs the project's lifecycle.</p>
+
+  <div class="db-table-block">
+    <div class="db-table-name">TABLE: projects</div>
+    <div class="db-header-row">
+      <span>Field</span><span>Type</span><span>Description</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">id <span class="badge-pk">PK</span></span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>AUTO_INCREMENT</span>
+      <span class="db-field-desc">Unique project identifier. Referenced by the <code>tasks</code> table to associate deliverables with their parent project.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">title</span>
+      <span class="db-field-type">VARCHAR(500)<br>NOT NULL</span>
+      <span class="db-field-desc">The official title of the graduation project as registered by the supervisor. Displayed in all listing and reporting interfaces.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">description</span>
+      <span class="db-field-type">LONGTEXT<br>NULLABLE</span>
+      <span class="db-field-desc">Full project scope, objectives, and methodology. Used by the AI Copilot to generate context-aware resource suggestions.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">supervisor_id <span class="badge-fk">FK</span></span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>NOT NULL</span>
+      <span class="db-field-desc">Foreign key referencing <code>users.id</code> for the supervising professor. This user receives all task submission notifications and controls grading.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">status</span>
+      <span class="db-field-type">ENUM<br>DEFAULT 'pending'</span>
+      <span class="db-field-desc">Project lifecycle state. Valid values: <code>pending</code>, <code>active</code>, <code>completed</code>, <code>archived</code>. Drives conditional UI rendering and automated cron-based transitions.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">start_date</span>
+      <span class="db-field-type">DATE<br>NULLABLE</span>
+      <span class="db-field-desc">Official project start date used as the baseline for progress calculations and timeline charts.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">end_date</span>
+      <span class="db-field-type">DATE<br>NULLABLE</span>
+      <span class="db-field-desc">Project submission deadline. When this date passes, the system triggers a status transition to <code>completed</code> via a scheduled cron job.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">created_at</span>
+      <span class="db-field-type">TIMESTAMP</span>
+      <span class="db-field-desc">Project registration timestamp, set automatically at insert time.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">updated_at</span>
+      <span class="db-field-type">TIMESTAMP</span>
+      <span class="db-field-desc">Automatically updated on any field modification, providing a complete audit trail for project changes.</span>
+    </div>
+  </div>
+
+
+  <!-- TABLE: tasks -->
+  <div class="section-heading">Table 3 — <code>tasks</code></div>
+  <p>The operational core of the system. Each record represents a deliverable that a student must submit within a project. The table maintains the full history of submission, review, grading, and feedback cycles.</p>
+
+  <div class="db-table-block">
+    <div class="db-table-name">TABLE: tasks</div>
+    <div class="db-header-row">
+      <span>Field</span><span>Type</span><span>Description</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">id <span class="badge-pk">PK</span></span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>AUTO_INCREMENT</span>
+      <span class="db-field-desc">Unique task record identifier.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">project_id <span class="badge-fk">FK</span></span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>NOT NULL</span>
+      <span class="db-field-desc">Foreign key to <code>projects.id</code>. Groups tasks under their parent project for aggregated progress reporting.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">student_id <span class="badge-fk">FK</span></span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>NOT NULL</span>
+      <span class="db-field-desc">Foreign key to <code>users.id</code> identifying the student responsible for this task submission.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">title</span>
+      <span class="db-field-type">VARCHAR(255)<br>NOT NULL</span>
+      <span class="db-field-desc">Descriptive name of the task (e.g., "Phase 2 — System Design Document").</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">file_path</span>
+      <span class="db-field-type">VARCHAR(1000)<br>NULLABLE</span>
+      <span class="db-field-desc">Server-side path to the uploaded deliverable file. NULL indicates the task has not yet been submitted. Updated by the upload controller on each submission.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">file_name</span>
+      <span class="db-field-type">VARCHAR(500)<br>NULLABLE</span>
+      <span class="db-field-desc">The original filename as provided by the student's device, preserved for display purposes in the supervisor review interface.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">grade</span>
+      <span class="db-field-type">DECIMAL(5,2)<br>NULLABLE</span>
+      <span class="db-field-desc">Numerical grade awarded by the supervisor on a 0.00–100.00 scale. A NULL value indicates the task is pending evaluation.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">feedback</span>
+      <span class="db-field-type">TEXT<br>NULLABLE</span>
+      <span class="db-field-desc">Written qualitative feedback from the supervisor. Displayed to the student after grading and retained permanently in the academic record.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">status</span>
+      <span class="db-field-type">ENUM<br>DEFAULT 'pending'</span>
+      <span class="db-field-desc">Task lifecycle state. Valid values: <code>pending</code>, <code>submitted</code>, <code>under_review</code>, <code>graded</code>, <code>resubmit_required</code>. Drives dashboard status badges and notification triggers.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">due_date</span>
+      <span class="db-field-type">DATETIME<br>NULLABLE</span>
+      <span class="db-field-desc">Submission deadline set by the supervisor. The cron job compares this against current time to dispatch deadline reminder notifications.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">submitted_at</span>
+      <span class="db-field-type">DATETIME<br>NULLABLE</span>
+      <span class="db-field-desc">Exact timestamp of the student's file upload. Set once on first successful submission; immutable thereafter to preserve the audit record.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">graded_at</span>
+      <span class="db-field-type">DATETIME<br>NULLABLE</span>
+      <span class="db-field-desc">Timestamp when the supervisor finalized and saved the grade, completing the evaluation audit trail.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">created_at / updated_at</span>
+      <span class="db-field-type">TIMESTAMP</span>
+      <span class="db-field-desc">Standard audit timestamps managed automatically by the database engine.</span>
+    </div>
+  </div>
+
+
+  <!-- TABLE: notifications -->
+  <div class="section-heading">Table 4 — <code>notifications</code></div>
+  <p>Records all system-generated and user-triggered notifications. Each notification is scoped to a single recipient. The <code>is_read</code> flag powers the unread badge counter displayed across all dashboard headers.</p>
+
+  <div class="db-table-block">
+    <div class="db-table-name">TABLE: notifications</div>
+    <div class="db-header-row">
+      <span>Field</span><span>Type</span><span>Description</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">id <span class="badge-pk">PK</span></span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>AUTO_INCREMENT</span>
+      <span class="db-field-desc">Unique notification record identifier.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">user_id <span class="badge-fk">FK</span></span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>NOT NULL</span>
+      <span class="db-field-desc">Foreign key to <code>users.id</code> identifying the notification recipient. Indexed for high-performance unread-count queries executed on every dashboard load.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">message</span>
+      <span class="db-field-type">TEXT<br>NOT NULL</span>
+      <span class="db-field-desc">The human-readable notification body rendered in the notification panel (e.g., "Your task 'System Design' has been graded: 91/100").</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">type</span>
+      <span class="db-field-type">ENUM<br>NOT NULL</span>
+      <span class="db-field-desc">Categorizes the notification for icon and filter-by-type rendering. Values: <code>task_submitted</code>, <code>grade_received</code>, <code>feedback_added</code>, <code>deadline_reminder</code>, <code>system</code>.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">notifiable_type</span>
+      <span class="db-field-type">VARCHAR(100)<br>NULLABLE</span>
+      <span class="db-field-desc">Polymorphic entity reference (e.g., <code>'Task'</code>, <code>'Project'</code>). Enables deep-linking from the notification to the relevant detail page.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">notifiable_id</span>
+      <span class="db-field-type">BIGINT UNSIGNED<br>NULLABLE</span>
+      <span class="db-field-desc">The ID of the referenced entity (paired with <code>notifiable_type</code>). Together they form a polymorphic relationship that links the notification to its source object.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">is_read</span>
+      <span class="db-field-type">TINYINT(1)<br>DEFAULT 0</span>
+      <span class="db-field-desc">Read-state flag. <code>0</code> = unread (included in badge counter). <code>1</code> = read (dismissed). Updated in bulk when the user opens the notification panel.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">read_at</span>
+      <span class="db-field-type">DATETIME<br>NULLABLE</span>
+      <span class="db-field-desc">Exact timestamp of when the user acknowledged the notification, recorded for engagement analytics.</span>
+    </div>
+    <div class="db-field-row">
+      <span class="db-field-name">created_at</span>
+      <span class="db-field-type">TIMESTAMP</span>
+      <span class="db-field-desc">Notification dispatch timestamp. Used to sort notifications in reverse chronological order (most recent first).</span>
+    </div>
+  </div>
+
+
+  <div class="sep"></div>
+
+
+  <!-- ══════════════════════════════════════
+       PART 3 — SYSTEM TESTING TABLE
+  ══════════════════════════════════════ -->
+  <div class="chapter-heading">
+    <div class="ch-label">Part Three</div>
+    <h2>System Testing Table</h2>
+  </div>
+
+  <p class="lead">
+    The table below documents the black-box manual testing results for the five primary
+    features of the UniTrack AI platform. Each test case was executed against the live
+    staging environment (Vercel frontend + Railway backend + SQLite database).
+  </p>
+
+  <div class="summary-row">
+    <div class="summary-cell">
+      <span class="s-num">5</span>
+      <span class="s-label">Features Tested</span>
+    </div>
+    <div class="summary-cell">
+      <span class="s-num">5</span>
+      <span class="s-label">Test Cases</span>
+    </div>
+    <div class="summary-cell">
+      <span class="s-num">5</span>
+      <span class="s-label">Passed</span>
+    </div>
+    <div class="summary-cell">
+      <span class="s-num">0</span>
+      <span class="s-label">Failed</span>
+    </div>
+    <div class="summary-cell">
+      <span class="s-num">100%</span>
+      <span class="s-label">Pass Rate</span>
+    </div>
+  </div>
+
+  <div class="test-table-wrap">
+    <table class="test-table">
+      <thead>
+        <tr>
+          <th style="width:80px;">Test&nbsp;Case</th>
+          <th style="width:130px;">Feature Tested</th>
+          <th style="width:220px;">Input / Action</th>
+          <th style="width:220px;">Expected Result</th>
+          <th style="width:80px;">Actual&nbsp;Result</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- TC-01: Login -->
+        <tr>
+          <td><span class="tc-id">TC-01</span></td>
+          <td><span class="feature-name">User Login &amp; Authentication</span></td>
+          <td>
+            A registered student enters:<br>
+            Email: <code>student@uni.edu</code><br>
+            Password: <code>Password@123</code><br>
+            and clicks the Login button.
+          </td>
+          <td>
+            The system verifies the credentials against the <code>users</code> table, generates
+            a signed JWT token, stores it in the browser's localStorage, and redirects
+            the user to the Student Dashboard page. An HTTP 200 response is returned.
+          </td>
+          <td><span class="pass-badge">✅ PASS</span></td>
+        </tr>
+
+        <!-- TC-02: Project Creation -->
+        <tr>
+          <td><span class="tc-id">TC-02</span></td>
+          <td><span class="feature-name">Project Creation by Supervisor</span></td>
+          <td>
+            An authenticated supervisor navigates to
+            <em>Dashboard → New Project</em> and submits the form with:<br>
+            Title: <em>"Smart Campus System"</em><br>
+            Description, start date: 01/09/2025,
+            end date: 30/05/2026, and assigns 3 students.
+          </td>
+          <td>
+            A new record is inserted into the <code>projects</code> table with
+            <code>status = 'active'</code>. The three enrolled students appear
+            in the project roster. Each student receives a system notification:
+            <em>"You have been enrolled in project: Smart Campus System."</em>
+            HTTP 201 returned.
+          </td>
+          <td><span class="pass-badge">✅ PASS</span></td>
+        </tr>
+
+        <!-- TC-03: Task Upload -->
+        <tr>
+          <td><span class="tc-id">TC-03</span></td>
+          <td><span class="feature-name">Student Task File Upload</span></td>
+          <td>
+            An authenticated student opens task
+            <em>"Phase 1 — Requirements Document"</em>,
+            selects a valid PDF file (2.4 MB), and clicks
+            <em>Upload Task</em>.
+          </td>
+          <td>
+            The file passes client-side and server-side validation.
+            Multer saves the file to <code>uploads/tasks/</code> on the server.
+            The <code>tasks</code> table record is updated with
+            <code>file_path</code>, <code>file_name</code>, <code>file_size</code>,
+            <code>status = 'submitted'</code>, and <code>submitted_at = NOW()</code>.
+            The supervisor receives a notification. HTTP 200 returned.
+          </td>
+          <td><span class="pass-badge">✅ PASS</span></td>
+        </tr>
+
+        <!-- TC-04: Supervisor Feedback -->
+        <tr>
+          <td><span class="tc-id">TC-04</span></td>
+          <td><span class="feature-name">Supervisor Grade &amp; Feedback Submission</span></td>
+          <td>
+            The supervisor opens the pending review for
+            <em>"Phase 1 — Requirements Document"</em>,
+            assigns a grade of <strong>88.50</strong>, writes feedback:
+            <em>"Excellent structure. Improve the use-case section."</em>,
+            and clicks <em>Submit Grade</em>.
+          </td>
+          <td>
+            The <code>tasks</code> table is updated with
+            <code>grade = 88.50</code>, <code>feedback = "Excellent..."</code>,
+            <code>status = 'graded'</code>, and <code>graded_at = NOW()</code>.
+            The student receives a notification:
+            <em>"Your task has been graded: 88.50/100."</em>
+            The student's dashboard progress ring updates accordingly.
+            HTTP 200 returned.
+          </td>
+          <td><span class="pass-badge">✅ PASS</span></td>
+        </tr>
+
+        <!-- TC-05: Notifications -->
+        <tr>
+          <td><span class="tc-id">TC-05</span></td>
+          <td><span class="feature-name">Real-Time Notification Delivery</span></td>
+          <td>
+            While a student's dashboard is open in the browser,
+            the supervisor grades a pending task.
+            The student does not refresh the page manually.
+          </td>
+          <td>
+            Within 30 seconds (one polling interval), the notification bell icon
+            on the student's dashboard displays an incremented unread badge counter.
+            Opening the notification dropdown shows the new entry:
+            <em>"Your task 'Phase 1' has been graded: 88.50/100."</em>
+            The <code>notifications</code> table contains the new record with
+            <code>is_read = 0</code>. Upon opening the panel, the record transitions
+            to <code>is_read = 1</code> and <code>read_at = NOW()</code>.
+          </td>
+          <td><span class="pass-badge">✅ PASS</span></td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note-box">
+    <strong>Testing Methodology:</strong> All test cases above were executed as black-box tests
+    against the deployed staging environment. Test inputs were designed to cover the nominal
+    (happy path) execution flow. Additional edge-case tests (invalid file types, wrong passwords,
+    unauthorized role access, oversized files) were conducted separately and are documented in
+    the full QA test suite included in Appendix B.
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- Footer -->
+  <div style="text-align:center; font-size:11px; color:#999; padding-top:8px;">
+    UniTrack AI &mdash; Technical Documentation &nbsp;|&nbsp;
+    Developer: Mohamed El-Sayed Abdel-Khalek Al-Abbasi &nbsp;|&nbsp;
+    April 2026 &nbsp;|&nbsp; Version 1.0
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>

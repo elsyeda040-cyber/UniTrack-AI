@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { professorService } from '../../services/api';
 import {
@@ -49,17 +50,27 @@ export default function ProfessorNotifications() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user?.id) {
-      professorService.getTeams(user.id)
-        .then(res => {
-          const t = res.data || [];
-          setTeams(t);
-          setNotifications(generateMockNotifications(t));
-        })
-        .catch(() => setNotifications(generateMockNotifications([])))
-        .finally(() => setLoading(false));
+      const fetchNotifs = async () => {
+        try {
+          const [teamsRes, notifsRes] = await Promise.all([
+            professorService.getTeams(user.id),
+            userService.getNotifications(user.id)
+          ]);
+          setTeams(teamsRes.data || []);
+          setNotifications(notifsRes.data || []);
+        } catch (err) {
+          console.error("Failed to fetch notifications", err);
+          // Fallback to empty if both fail
+          setNotifications([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchNotifs();
     }
   }, [user]);
 
@@ -70,9 +81,51 @@ export default function ProfessorNotifications() {
     setRefreshing(false);
   };
 
-  const markRead = (id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  const deleteNotif = (id) => setNotifications(prev => prev.filter(n => n.id !== id));
+  const handleNotifClick = (notif) => {
+    markRead(notif.id);
+    switch (notif.type) {
+      case 'task_completed':
+      case 'task_submitted':
+        navigate('/professor/tasks');
+        break;
+      case 'message':
+        navigate('/professor/chat');
+        break;
+      case 'progress':
+      case 'warning':
+        navigate('/professor/analytics');
+        break;
+      case 'request':
+        navigate('/professor/teams');
+        break;
+      case 'rating':
+        navigate('/professor/grades');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const markRead = async (id) => {
+    try {
+      // In a real app, there would be a PUT /notifications/:id/read
+      // For now, update local state as the general clear API exists
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (err) { console.error(err); }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await userService.clearChatNotifications(user.id); // Re-using this to mark all as read
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteNotif = (id) => {
+    // Local deletion for now as there's no DELETE endpoint in main.py yet
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+  
   const clearAll = () => {
     if (window.confirm('حذف كل الإشعارات؟')) setNotifications([]);
   };
@@ -181,7 +234,7 @@ export default function ProfessorNotifications() {
             return (
               <div
                 key={notif.id}
-                onClick={() => markRead(notif.id)}
+                onClick={() => handleNotifClick(notif)}
                 className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer group hover:shadow-sm ${
                   !notif.read
                     ? 'bg-white dark:bg-slate-800 border-purple-100 dark:border-purple-900/40 shadow-sm'

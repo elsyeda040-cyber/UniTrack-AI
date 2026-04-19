@@ -6,30 +6,70 @@ import { FileText, Download, Sparkles, Loader2, History, ChevronRight, FileCode,
 export default function ProjectDocs() {
   const { user } = useApp();
   const [docs, setDocs] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [selectedTeamId, setSelectedTeamId] = useState(user.teamId || localStorage.getItem('lastSelectedTeamId'));
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
 
   useEffect(() => {
-    fetchDocs();
-  }, []);
+    const init = async () => {
+      if (user.role === 'professor') {
+        try {
+          const res = await teamService.getAll();
+          const supervised = res.data.filter(t => t.professor_id === user.id);
+          setTeams(supervised);
+          if (!selectedTeamId && supervised.length > 0) {
+            setSelectedTeamId(supervised[0].id);
+          } else if (supervised.length === 0) {
+            setLoading(false);
+          }
+        } catch (err) {
+          console.error("Failed to fetch teams", err);
+          setLoading(false);
+        }
+      } else if (user.teamId) {
+        setSelectedTeamId(user.teamId);
+      } else {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedTeamId) {
+      fetchDocs();
+    }
+  }, [selectedTeamId]);
 
   const fetchDocs = async () => {
+    const tid = selectedTeamId || user.teamId;
+    if (!tid) return;
+    setLoading(true);
     try {
-      const res = await teamService.getDocs(user.teamId);
+      const res = await teamService.getDocs(tid);
       setDocs(res.data);
       if (res.data.length > 0) setSelectedDoc(res.data[0]);
+      else setSelectedDoc(null);
     } catch (err) {
       console.error(err);
+      setDocs([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleGenerate = async (type) => {
+    const tid = selectedTeamId || user.teamId;
+    if (!tid) {
+      alert("Please select a team first.");
+      return;
+    }
     setGenerating(true);
     try {
-      await teamService.generateDocs(user.teamId, type);
+      const tid = selectedTeamId || user.teamId;
+      await teamService.generateDocs(tid, type);
       fetchDocs();
     } catch (err) {
       console.error(err);
@@ -48,7 +88,21 @@ export default function ProjectDocs() {
             </div>
             <div>
                <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">AI Documentation</h1>
-               <p className="text-slate-500 dark:text-slate-400 font-medium">Automatic thesis and technical specification builder.</p>
+               <div className="flex items-center gap-4 mt-2">
+                 <p className="text-slate-500 dark:text-slate-400 font-medium">Automatic thesis and technical specification builder.</p>
+                 {user.role === 'professor' && teams.length > 0 && (
+                   <select 
+                     value={selectedTeamId} 
+                     onChange={(e) => {
+                       setSelectedTeamId(e.target.value);
+                       localStorage.setItem('lastSelectedTeamId', e.target.value);
+                     }}
+                     className="bg-indigo-50 border-none text-indigo-600 text-xs font-bold py-1 px-3 rounded-lg outline-none cursor-pointer"
+                   >
+                     {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                   </select>
+                 )}
+               </div>
             </div>
          </div>
 
@@ -120,8 +174,19 @@ export default function ProjectDocs() {
                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedDoc.type.replace('_', ' ')} Draft</span>
                         </div>
                      </div>
-                     <button className="p-4 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
-                        <Download className="w-4 h-4" /> Export PDF
+                     <button 
+                        onClick={() => {
+                          const url = window.URL.createObjectURL(new Blob([selectedDoc.content]));
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.setAttribute('download', `${selectedDoc.title}.txt`);
+                          document.body.appendChild(link);
+                          link.click();
+                          alert("Draft exported as text file. (PDF conversion requires server-side rendering)");
+                        }}
+                        className="p-4 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold flex items-center gap-2 hover:scale-105 transition-all shadow-lg"
+                     >
+                        <Download className="w-4 h-4" /> Export Draft
                      </button>
                   </div>
                   <div className="flex-1 p-12 overflow-y-auto whitespace-pre-wrap font-medium text-slate-600 dark:text-slate-300 leading-[2] custom-scrollbar text-lg">

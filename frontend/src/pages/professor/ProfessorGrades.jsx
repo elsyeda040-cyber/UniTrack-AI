@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { professorService, teamService } from '../../services/api';
 import {
@@ -38,6 +39,7 @@ function GradeBar({ score }) {
 
 export default function ProfessorGrades() {
   const { user } = useApp();
+  const navigate = useNavigate();
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [teamData, setTeamData] = useState(null);
@@ -45,6 +47,7 @@ export default function ProfessorGrades() {
   const [grades, setGrades] = useState({}); // { studentId: { score, feedback } }
   const [editingStudent, setEditingStudent] = useState(null);
   const [saveStates, setSaveStates] = useState({});
+  const [gradeFilter, setGradeFilter] = useState('all'); // all, high, low, average
 
   useEffect(() => {
     if (user?.id) fetchTeams();
@@ -111,8 +114,14 @@ export default function ProfessorGrades() {
     setTimeout(() => setSaveStates(prev => ({ ...prev, [studentId]: null })), 2000);
   };
 
-  const students = teamData?.students || [];
-  const avgScore = students.length > 0 && Object.keys(grades).length > 0
+  const students = (teamData?.students || []).filter(s => {
+    const score = grades[s.id]?.score || 0;
+    if (gradeFilter === 'high') return score > 85;
+    if (gradeFilter === 'low') return score < 60;
+    if (gradeFilter === 'average') return score >= 60 && score <= 85;
+    return true;
+  });
+  const avgScore = (teamData?.students || []).length > 0 && Object.keys(grades).length > 0
     ? Math.round(Object.values(grades).reduce((s, g) => s + (g.score || 0), 0) / Object.keys(grades).length)
     : 0;
   const topStudent = students.reduce((top, s) => {
@@ -153,21 +162,33 @@ export default function ProfessorGrades() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'متوسط الدرجات', value: `${avgScore}%`, icon: BarChart2, color: 'bg-purple-500' },
-          { label: 'عدد الطلاب', value: students.length, icon: Users, color: 'bg-blue-500' },
-          { label: 'أعلى درجة', value: Math.max(...Object.values(grades).map(g => g.score || 0), 0), icon: Star, color: 'bg-amber-500' },
-          { label: 'أقل درجة', value: Math.min(...(Object.values(grades).map(g => g.score || 100)), 100), icon: TrendingUp, color: 'bg-rose-500' },
+          { id: 'average', label: 'متوسط الدرجات', value: `${avgScore}%`, icon: BarChart2, color: 'bg-purple-500', onClick: () => navigate('/professor/analytics') },
+          { id: 'all', label: 'عدد الطلاب', value: (teamData?.students || []).length, icon: Users, color: 'bg-blue-500', onClick: () => navigate('/professor/teams') },
+          { id: 'high', label: 'أعلى درجة', value: Math.max(...Object.values(grades).map(g => g.score || 0), 0), icon: Star, color: 'bg-amber-500', onClick: () => navigate('/professor/leaderboard') },
+           { id: 'low', label: 'أقل درجة', value: Math.min(...(Object.values(grades).map(g => g.score || 100)), 100), icon: TrendingUp, color: 'bg-rose-500', onClick: () => navigate('/professor/analytics') },
         ].map(stat => {
           const Icon = stat.icon;
+          const isActive = gradeFilter === stat.id && !stat.onClick;
           return (
-            <div key={stat.label} className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700">
+            <div 
+              key={stat.label} 
+              onClick={() => {
+                if (stat.onClick) stat.onClick();
+                else setGradeFilter(isActive ? 'all' : stat.id);
+              }}
+              className={`rounded-2xl p-5 shadow-sm border transition-all cursor-pointer hover:scale-[1.05] hover:shadow-xl duration-300 group ${
+                isActive 
+                  ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-400' 
+                  : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'
+              }`}
+            >
               <div className="flex items-center gap-2 mb-3">
-                <div className={`w-9 h-9 ${stat.color} rounded-xl flex items-center justify-center`}>
+                <div className={`w-9 h-9 ${stat.color} rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform`}>
                   <Icon className="w-4 h-4 text-white" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-slate-800 dark:text-white">{stat.value}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{stat.label}</p>
+              <p className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{stat.value}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">{stat.label}</p>
             </div>
           );
         })}

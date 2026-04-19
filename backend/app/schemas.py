@@ -18,8 +18,12 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     teamId: Optional[str] = None
+    password: Optional[str] = None
     class Config:
         from_attributes = True
+
+class UserUpdatePassword(BaseModel):
+    password: str
 
 class UserUpdateTeam(BaseModel):
     team_id: Optional[str] = None
@@ -56,6 +60,17 @@ class TeamCreate(BaseModel):
     color: str = "#3b82f6"
     emoji: str = "🚀"
 
+class TaskCreate(BaseModel):
+    title: str
+    description: str
+    deadline: str
+    status: str = "todo"
+    color: str = "#3b82f6"
+
+class UserEvaluationUpdate(BaseModel):
+    score: int
+    feedback: Optional[str] = None
+
 class TeamResponse(TeamBase):
     professor: Optional[UserResponse] = None
     assistant: Optional[UserResponse] = None
@@ -64,7 +79,7 @@ class TeamResponse(TeamBase):
         from_attributes = True
 
 class MessageBase(BaseModel):
-    team_id: str
+    team_id: Optional[str] = None
     sender_id: str
     text: Optional[str] = None
     type: str = "text"
@@ -155,6 +170,15 @@ class AdminStats(BaseModel):
     total_teams: int
     total_tasks: int
     avg_progress: float
+
+class ProfessorAnalytics(BaseModel):
+    total_students: int
+    avg_progress: float
+    best_team_name: str
+    best_team_id: str
+    needs_attention_count: int
+    team_progress_comparison: List[dict]
+    overall_progress_timeline: List[dict]
 
 class ResourceBase(BaseModel):
     title: str

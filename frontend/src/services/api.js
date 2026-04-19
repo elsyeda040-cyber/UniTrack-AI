@@ -22,7 +22,10 @@ export const userService = {
 };
 
 export const teamService = {
+  getTeam: (teamId) => api.get(`/teams/${teamId}`),
   getTasks: (teamId) => api.get(`/teams/${teamId}/tasks`),
+  createTask: (teamId, data) => api.post(`/teams/${teamId}/tasks`, data),
+  updateStudentEvaluation: (userId, data) => api.put(`/users/${userId}/evaluation`, data),
   updateTask: (taskId, data) => api.put(`/tasks/${taskId}`, data),
   getMessages: (teamId) => api.get(`/teams/${teamId}/messages`),
   sendMessage: (teamId, data) => api.post(`/teams/${teamId}/messages`, data),
@@ -68,6 +71,10 @@ export const communityService = {
 
 export const professorService = {
   getTeams: (profId) => api.get(`/professors/${profId}/teams`),
+  getTasks: (profId) => api.get(`/professors/${profId}/tasks`),
+  getAnalytics: (profId) => api.get(`/professors/${profId}/analytics`),
+  getEvents: (profId) => api.get(`/professors/${profId}/events`),
+  exportGlobalReport: (profId) => api.post(`/professors/${profId}/report/export`, {}, { responseType: 'blob' }),
 };
 
 export const assistantService = {
@@ -80,6 +87,7 @@ export const adminService = {
   createUser: (data) => api.post('/admin/users', data),
   createTeam: (data) => api.post('/admin/teams', data),
   updateUserTeam: (userId, teamId) => api.put(`/admin/users/${userId}/team`, { team_id: teamId }),
+  updateUserPassword: (userId, password) => api.put(`/admin/users/${userId}/password`, { password }),
   deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
 };
 
