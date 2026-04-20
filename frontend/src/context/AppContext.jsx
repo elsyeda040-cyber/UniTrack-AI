@@ -78,14 +78,20 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, expectedRole) => {
     setLoading(true);
     try {
       const res = await authService.login(email, password);
+      // Strict UI role boundary crossing protection
+      if (res.data.role !== expectedRole) {
+        throw new Error("عذراً! هذا الحساب لا يملك صلاحيات الدخول لهذه الواجهة. يرجى اختيار صفتك الصحيحة.");
+      }
       setUser(res.data);
       return res.data;
     } catch (err) {
-      throw new Error(err.response?.data?.detail || "Login failed");
+      // If it's a forced error, message is native, otherwise fetch details
+      const msg = err.response?.data?.detail || err.message || "Login failed";
+      throw new Error(msg);
     } finally {
       setLoading(false);
     }

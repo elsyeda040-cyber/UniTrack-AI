@@ -4,10 +4,10 @@ import { useApp } from '../context/AppContext';
 import { BookOpen, GraduationCap, Shield, Users, Eye, EyeOff, Sparkles } from 'lucide-react';
 
 const roles = [
-  { key: 'student', label: 'Student', icon: GraduationCap, color: 'from-blue-500 to-blue-600', desc: 'Access your projects & tasks', defaultEmail: 'ahmed@university.edu' },
-  { key: 'professor', label: 'Professor', icon: BookOpen, color: 'from-purple-500 to-purple-600', desc: 'Manage your teams', defaultEmail: 'hassan@university.edu' },
-  { key: 'assistant', label: 'Supervisor', icon: Users, color: 'from-emerald-500 to-emerald-600', desc: 'Monitor team progress', defaultEmail: 'sara@university.edu' },
-  { key: 'admin', label: 'Admin', icon: Shield, color: 'from-orange-500 to-orange-600', desc: 'Full system control', defaultEmail: 'admin@university.edu' },
+  { key: 'student', label: 'Student', icon: GraduationCap, color: 'from-blue-500 to-blue-600', desc: 'Access your projects & tasks' },
+  { key: 'professor', label: 'Professor', icon: BookOpen, color: 'from-purple-500 to-purple-600', desc: 'Manage your teams' },
+  { key: 'assistant', label: 'Supervisor', icon: Users, color: 'from-emerald-500 to-emerald-600', desc: 'Monitor team progress' },
+  { key: 'admin', label: 'Admin', icon: Shield, color: 'from-orange-500 to-orange-600', desc: 'Full system control' },
 ];
 
 export default function LoginPage() {
@@ -22,7 +22,6 @@ export default function LoginPage() {
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role.key);
-    setEmail(role.defaultEmail);
     setError('');
   };
 
@@ -31,7 +30,7 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const user = await login(email, password);
+      const user = await login(email, password, selectedRole);
       navigate(`/${user.role}`);
     } catch (err) {
       setError(err.message || "Invalid credentials");
@@ -126,6 +125,7 @@ export default function LoginPage() {
                 onChange={e => setEmail(e.target.value)}
                 className="input"
                 placeholder="your@university.edu"
+                autoComplete="off"
                 required
               />
             </div>
@@ -138,6 +138,7 @@ export default function LoginPage() {
                   onChange={e => setPassword(e.target.value)}
                   className="input pr-10"
                   placeholder="••••••••"
+                  autoComplete="new-password"
                 />
                 <button type="button" onClick={() => setShowPass(s => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
