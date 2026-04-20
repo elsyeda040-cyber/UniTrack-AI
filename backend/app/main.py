@@ -39,6 +39,22 @@ except ImportError:
     IcalEvent = None
     print("Warning: icalendar not installed. Calendar sync will be disabled.")
 
+import shutil
+
+# Safe Volume Setup for Railway SQLite
+data_dir = os.path.join(os.getcwd(), "data")
+if "data/unitrack.db" in os.environ.get("DATABASE_URL", ""):
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir, exist_ok=True)
+    
+    target_db = os.path.join(data_dir, "unitrack.db")
+    source_db = os.path.join(os.getcwd(), "unitrack.db")
+    
+    # If the shipped database exists but the volume is empty, copy it securely!
+    if not os.path.exists(target_db) and os.path.exists(source_db):
+        print("Migrating initial populated database to persistent volume...")
+        shutil.copy2(source_db, target_db)
+
 from app import models, schemas, database, email_service
 from app.database import engine, get_db
 
