@@ -9,29 +9,29 @@ export default function ProfilePage() {
     email: user?.email || '',
     bio: user?.bio || 'Academic enthusiast working on innovative projects.',
   });
-  const [profilePic, setProfilePic] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const fileInputRef = useRef(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => setProfilePic(event.target.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      updateUser({ ...formData, avatar: profilePic || user?.avatar });
-      setIsSaving(false);
+    try {
+      // 1. Update basic profile info
+      await updateUser({ ...formData, avatar: profilePic || user?.avatar });
+      
+      // 2. Update password if provided
+      if (newPassword.trim()) {
+        await userService.updatePassword(user.id, newPassword);
+        setNewPassword('');
+      }
+
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    }, 1000);
+    } catch (err) {
+      console.error("Save failed", err);
+      alert("فشل حفظ التعديلات.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -100,8 +100,8 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-4">
-              <div className="group">
-                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Full Name</label>
+              <div className="group text-left">
+                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">الاسم بالكامل</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
                   <input 
@@ -113,23 +113,43 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="group">
-                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
+              <div className="group text-left">
+                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">البريد الإلكتروني (غير قابل للتعديل)</label>
+                <div className="relative opacity-60">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input 
+                    disabled
                     type="email" 
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-primary-400 outline-none transition-all dark:text-white"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-not-allowed dark:text-slate-400"
                   />
                 </div>
               </div>
 
-              <div className="group">
-                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Biography</label>
+              <div className="group text-left">
+                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">تغيير كلمة المرور</label>
+                <div className="relative">
+                  <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="اتركها فارغة إذا كنت لا تريد التغيير"
+                    className="w-full pl-11 pr-12 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-primary-400 outline-none transition-all dark:text-white"
+                  />
+                  <button 
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? "إخفاء" : "إظهار"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="group text-left">
+                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">نبذة عنك</label>
                 <textarea 
-                  rows="4" 
+                  rows="3" 
                   value={formData.bio}
                   onChange={(e) => setFormData({...formData, bio: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-primary-400 outline-none transition-all dark:text-white resize-none"
@@ -138,7 +158,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="pt-4 flex items-center justify-between">
-              <p className="text-xs text-slate-400 italic">Last modified: Today, 8:45 PM</p>
+              <p className="text-xs text-slate-400 italic">تم آخر تعديل: اليوم</p>
               <button 
                 onClick={handleSave}
                 disabled={isSaving}
@@ -149,12 +169,12 @@ export default function ProfilePage() {
                 ) : showSuccess ? (
                   <>
                     <CheckCircle className="w-4 h-4" />
-                    <span>Saved!</span>
+                    <span>تم الحفظ!</span>
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                    <span>Save Changes</span>
+                    <span>حفظ التعديلات</span>
                   </>
                 )}
               </button>

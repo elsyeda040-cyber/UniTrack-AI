@@ -96,18 +96,47 @@ async def startup_seed():
 
 def _seed_database(db):
     import datetime
+    # Initial User Roles for System Audit
     users = [
-        models.User(id='admin-001', name='Administration', email='admin@university.edu', role='admin'),
+        models.User(id='admin-001', name='System Admin', email='admin@university.edu', role='admin'),
+        models.User(id='prof-001', name='Dr. Ahmed Khalil', email='professor@university.edu', role='professor'),
+        models.User(id='stud-001', name='Mohamed Al-Abbasi', email='student@university.edu', role='student'),
+        models.User(id='asst-001', name='Sarah Hassan', email='assistant@university.edu', role='assistant'),
     ]
+    
+    # Create the core UniTrack AI Team
+    team = models.Team(
+        id='T-TEST-001', 
+        name='UniTrack AI Team', 
+        project_title='Graduation Monitoring System', 
+        progress=45, 
+        color='#1e40af', 
+        professor_id='prof-001', 
+        assistant_id='asst-001'
+    )
+    
     for u in users:
         db.add(u)
+    db.add(team)
     db.commit()
+    
+    # Link student to the test team
+    student = db.query(models.User).filter(models.User.id == 'stud-001').first()
+    target_team = db.query(models.Team).filter(models.Team.id == 'T-TEST-001').first()
+    if student and target_team:
+        target_team.students.append(student)
+        db.commit()
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://localhost:3001", 
+        "http://127.0.0.1:3000", 
+        "http://127.0.0.1:3001"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -939,6 +968,32 @@ def delete_user(user_id: str, db: Session = Depends(get_db)):
 
 @app.put("/admin/users/{user_id}/password")
 def update_user_password(user_id: str, data: schemas.UserUpdatePassword, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.hashed_password = data.password
+    db.commit()
+    return {"status": "success", "msg": "Password updated successfully"}
+
+@app.put("/users/{user_id}/profile", response_model=schemas.UserResponse)
+def update_profile(user_id: str, data: schemas.UserBase, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update fields except email
+    user.name = data.name
+    user.bio = data.bio
+    user.avatar = data.avatar
+    # email is NOT updated here to satisfy "شيل صلاحيى تعديل الاميل"
+    
+    db.commit()
+    db.refresh(user)
+    return user
+
+@app.put("/users/{user_id}/password")
+def change_password(user_id: str, data: schemas.UserUpdatePassword, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

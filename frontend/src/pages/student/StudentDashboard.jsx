@@ -53,14 +53,10 @@ export default function StudentDashboard() {
   const fetchDashboardData = async () => {
     try {
       const res = await teamService.getTasks(user.teamId);
-      if (res.data && res.data.length > 0) {
-        setTasks(res.data);
-      } else {
-        setTasks(MOCK_TASKS); // fallback to mock data for presentation
-      }
+      setTasks(res.data || []);
     } catch (err) {
       console.error("Failed to fetch dashboard data", err);
-      setTasks(MOCK_TASKS); // fallback to mock data for presentation
+      setTasks([]);
     } finally {
       setLoading(false);
     }

@@ -59,6 +59,15 @@ export default function ProfessorAnalytics() {
     </div>
   );
 
+  if (!analytics) return (
+    <div className="card text-center p-12 animate-fade-in">
+      <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+      <h3 className="text-xl font-bold dark:text-white">Failed to Load Analytics</h3>
+      <p className="text-slate-500 dark:text-slate-400 mt-2">The analytics service is currently unavailable. Please try again later.</p>
+      <button onClick={fetchData} className="btn-secondary mt-6">Retry Connection</button>
+    </div>
+  );
+  
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">

@@ -13,7 +13,8 @@ export const authService = {
 
 export const userService = {
   getProfile: (userId) => api.get(`/users/${userId}`),
-  updateProfile: (userId, data) => api.put(`/users/${userId}`, data),
+  updateProfile: (userId, data) => api.put(`/users/${userId}/profile`, data),
+  updatePassword: (userId, password) => api.put(`/users/${userId}/password`, { password }),
   getNotifications: (userId) => api.get(`/users/${userId}/notifications`),
   clearChatNotifications: (userId) => api.post(`/users/${userId}/notifications/clear-chat`),
   getBadges: (userId) => api.get(`/users/${userId}/badges`),

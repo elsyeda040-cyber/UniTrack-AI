@@ -45,7 +45,6 @@ import AdminActivityLog from './pages/admin/AdminActivityLog';
 // Professor additional pages
 import ProfessorTasks from './pages/professor/ProfessorTasks';
 import ProfessorGrades from './pages/professor/ProfessorGrades';
-import ProfessorSchedule from './pages/professor/ProfessorSchedule';
 import ProfessorNotifications from './pages/professor/ProfessorNotifications';
 import ProfilePage from './pages/shared/ProfilePage';
 import Timeline from './pages/shared/Timeline';
@@ -55,11 +54,9 @@ import Scratchpad from './pages/shared/Scratchpad';
 import ResourceLibrary from './pages/shared/ResourceLibrary';
 import PerformanceInsights from './pages/shared/PerformanceInsights';
 import Leaderboard from './pages/shared/Leaderboard';
-import MeetingAssistant from './pages/shared/MeetingAssistant';
 import CareerNavigator from './pages/shared/CareerNavigator';
 import CommunityMarket from './pages/shared/CommunityMarket';
 import ProjectDocs from './pages/shared/ProjectDocs';
-import SmartWhiteboard from './pages/shared/SmartWhiteboard';
 import PresentationCoach from './pages/shared/PresentationCoach';
 import CodeMentor from './pages/shared/CodeMentor';
 import SkillMatrix from './pages/shared/SkillMatrix';
@@ -102,11 +99,9 @@ export default function App() {
           <Route path="resource-library" element={<ResourceLibrary />} />
           <Route path="insights" element={<PerformanceInsights />} />
           <Route path="leaderboard" element={<Leaderboard />} />
-          <Route path="meetings" element={<MeetingAssistant />} />
           <Route path="career" element={<CareerNavigator />} />
           <Route path="market" element={<CommunityMarket />} />
           <Route path="docs" element={<ProjectDocs />} />
-          <Route path="whiteboard" element={<SmartWhiteboard />} />
           <Route path="presentation-coach" element={<PresentationCoach />} />
           <Route path="code-mentor" element={<CodeMentor />} />
           <Route path="skill-matrix" element={<SkillMatrix />} />
@@ -123,16 +118,13 @@ export default function App() {
           <Route path="timeline" element={<Timeline />} />
           <Route path="files" element={<FileManager />} />
           <Route path="scratchpad" element={<Scratchpad />} />
-          <Route path="insights" element={<PerformanceInsights />} />
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="teams" element={<ProfessorTeams />} />
-          <Route path="meetings" element={<MeetingAssistant />} />
           <Route path="docs" element={<ProjectDocs />} />
-          <Route path="whiteboard" element={<SmartWhiteboard />} />
           <Route path="skill-matrix" element={<SkillMatrix />} />
           <Route path="tasks" element={<ProfessorTasks />} />
           <Route path="grades" element={<ProfessorGrades />} />
-          <Route path="schedule" element={<ProfessorSchedule />} />
+          <Route path="grades" element={<ProfessorGrades />} />
           <Route path="notifications" element={<ProfessorNotifications />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
@@ -145,8 +137,7 @@ export default function App() {
           <Route path="ai" element={<AssistantAI />} />
           <Route path="timeline" element={<Timeline />} />
           <Route path="files" element={<FileManager />} />
-          <Route path="meetings" element={<MeetingAssistant />} />
-          <Route path="whiteboard" element={<SmartWhiteboard />} />
+          <Route path="files" element={<FileManager />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 

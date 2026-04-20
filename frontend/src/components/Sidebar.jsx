@@ -22,8 +22,6 @@ const studentNav = [
   { to: '/student/resource-library', icon: BookOpen, label: 'Library' },
   { to: '/student/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/student/reports', icon: BarChart2, label: 'Reports' },
-  { to: '/student/meetings', icon: Video, label: 'Meetings' },
-  { to: '/student/whiteboard', icon: Layers, label: 'Whiteboard' },
   { to: '/student/market', icon: ShoppingBag, label: 'Help Market' },
   { to: '/student/docs', icon: FileCode, label: 'AI Docs' },
   { to: '/student/career', icon: Briefcase, label: 'Career' },
@@ -38,7 +36,6 @@ const professorNav = [
   { to: '/professor/analytics', icon: BarChart2, label: 'Analytics' },
   { to: '/professor/tasks', icon: CheckSquare, label: 'Tasks' },
   { to: '/professor/grades', icon: Star, label: 'Grades' },
-  { to: '/professor/schedule', icon: Calendar, label: 'Schedule' },
   { to: '/professor/notifications', icon: Bell, label: 'Notifications' },
   { to: '/professor/files', icon: HardDrive, label: 'Project Files' },
   { to: '/professor/chat', icon: MessageCircle, label: 'Chat' },
@@ -47,9 +44,7 @@ const professorNav = [
   { to: '/professor/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/professor/timeline', icon: Calendar, label: 'Timeline' },
   { to: '/professor/scratchpad', icon: Edit3, label: 'Team Notes' },
-  { to: '/professor/meetings', icon: Video, label: 'Meetings' },
   { to: '/professor/docs', icon: FileCode, label: 'AI Docs' },
-  { to: '/professor/whiteboard', icon: Layers, label: 'Whiteboard' },
   { to: '/professor/skill-matrix', icon: Cpu, label: 'Skill Matrix' },
 ];
 
@@ -61,8 +56,6 @@ const assistantNav = [
   { to: '/assistant/insights', icon: BarChart2, label: 'AI Insights' },
   { to: '/assistant/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/assistant/timeline', icon: Calendar, label: 'Timeline' },
-  { to: '/assistant/meetings', icon: Video, label: 'Meetings' },
-  { to: '/assistant/whiteboard', icon: Layers, label: 'Whiteboard' },
 ];
 
 const adminNav = [
