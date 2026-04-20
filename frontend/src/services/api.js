@@ -3,7 +3,7 @@ import axios from 'axios';
 // في الـ production، الطلبات تروح عن طريق /api → Vercel proxy → Railway
 // محلياً، VITE_API_URL بتحدد العنوان المباشر للـ backend
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL: "/api",
   withCredentials: false,
 });
 
