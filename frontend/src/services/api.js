@@ -90,6 +90,7 @@ export const adminService = {
   updateUserTeam: (userId, teamId) => api.put(`/admin/users/${userId}/team`, { team_id: teamId }),
   updateUserPassword: (userId, password) => api.put(`/admin/users/${userId}/password`, { password }),
   deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
+  exportDatabase: () => api.get('/admin/database/export', { responseType: 'blob' }),
 };
 
 export const aiService = {

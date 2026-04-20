@@ -112,6 +112,22 @@ export default function AdminSettings() {
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
+  const handleExportData = async () => {
+    try {
+      const response = await adminService.exportDatabase();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'unitrack_backup.db');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('فشل تصدير البيانات. المرجو المحاولة لاحقاً.');
+    }
+  };
+
   const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -217,7 +233,7 @@ export default function AdminSettings() {
                 <RefreshCw className="w-4 h-4" /> إعادة ضبط المنصة
               </button>
               <button
-                onClick={() => alert('جاري تصدير البيانات...')}
+                onClick={handleExportData}
                 className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-red-600 border border-red-200 dark:border-red-900/40 rounded-xl font-semibold text-sm hover:bg-red-50 transition-colors"
               >
                 <Download className="w-4 h-4" /> تصدير كل البيانات

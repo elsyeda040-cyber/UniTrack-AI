@@ -156,6 +156,19 @@ app.add_middleware(
 async def root():
     return {"message": "UniTrack AI API is running"}
 
+@app.get("/admin/database/export")
+def export_database():
+    from fastapi.responses import FileResponse
+    # Safely locate the active database (prioritizing the volume)
+    db_path = os.path.join(os.getcwd(), "data", "unitrack.db")
+    if not os.path.exists(db_path):
+        db_path = os.path.join(os.getcwd(), "unitrack.db")
+    
+    if not os.path.exists(db_path):
+        raise HTTPException(status_code=404, detail="System Database file is missing from the server.")
+        
+    return FileResponse(path=db_path, filename="unitrack_backup.db", media_type="application/octet-stream")
+
 # Auth Endpoint (Simplified)
 @app.post("/auth/login", response_model=schemas.UserResponse)
 def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
