@@ -14,6 +14,7 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
   const [messages, setMessages] = useState([]);
   const [chatMode, setChatMode] = useState('global'); // 'global' or 'mentor'
   const [teamObj, setTeamObj] = useState(null);
+  const [loadingTeam, setLoadingTeam] = useState(true);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef(null);
@@ -40,10 +41,18 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
   useEffect(() => {
     if (!activeTeamId) {
       setLoading(false);
+      setLoadingTeam(false);
       return;
     }
     const loadTeam = async () => {
-      try { const res = await teamService.getTeam(activeTeamId); setTeamObj(res.data); } catch(e){}
+      try { 
+        const res = await teamService.getTeam(activeTeamId); 
+        setTeamObj(res.data); 
+      } catch(e){
+        console.error("Team context load failed", e);
+      } finally {
+        setLoadingTeam(false);
+      }
     };
     loadTeam();
     fetchMessages();
@@ -342,26 +351,27 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
           </div>
           <div>
             <h3 className="font-bold text-slate-800 dark:text-white leading-tight">
-              {chatMode === 'global' ? activeTeamName : 'Private Inbox (Mentor)'}
+              {chatMode === 'global' ? activeTeamName : (user.role === 'student' ? 'المشرف الأكاديمي (خاص)' : 'محادثة خاصة')}
             </h3>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Active Workspace</span>
+              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">متصل الآن</span>
             </div>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          {teamObj?.professor_id && (
+          {user.role === 'student' && teamObj?.professor_id && (
             <button 
               onClick={() => { setChatMode(m => m === 'global' ? 'mentor' : 'global'); setMessages([]); setLoading(true); }}
-              className={`px-3 py-1.5 rounded-lg font-medium text-xs border ${
+              className={`px-3 py-1.5 rounded-lg font-bold text-xs border transition-all flex items-center gap-2 ${
                 chatMode === 'mentor' 
-                ? 'bg-purple-600 text-white border-purple-600' 
-                : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50'
-              } transition-colors`}
+                ? 'bg-purple-600 text-white border-purple-600 shadow-md' 
+                : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50 animate-pulse'
+              }`}
             >
-              {chatMode === 'global' ? 'Open Mentor DM' : 'Back to Team'}
+              <User className="w-3.5 h-3.5" />
+              {chatMode === 'global' ? 'تواصل مع المشرف' : 'العودة للشات العام'}
             </button>
           )}
         
@@ -369,14 +379,14 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
           type="button"
           onClick={(e) => { e.preventDefault(); handleGetSummary(); }}
           disabled={isSummarizing}
-          className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all font-medium text-xs group border border-blue-100 dark:border-blue-800"
+          className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all font-bold text-xs group border border-blue-100 dark:border-blue-800"
         >
           {isSummarizing ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
             <Sparkles className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
           )}
-          <span>AI Summary</span>
+          <span>ملخص الذكاء الاصطناعي</span>
         </button>
       </div>
 

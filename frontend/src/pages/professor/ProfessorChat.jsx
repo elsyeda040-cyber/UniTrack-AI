@@ -50,18 +50,18 @@ export default function ProfessorChat() {
   );
 
   return (
-    <div className="flex flex-col md:flex-row h-full gap-4 animate-fade-in" dir="ltr">
+    <div className="flex flex-col md:flex-row h-full gap-4 animate-fade-in" dir="rtl">
       {/* 1. Teams Sidebar */}
       <div className="w-full md:w-64 flex flex-col gap-2">
-        <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-2 px-1">
-          <Users className="w-5 h-5 text-purple-500" /> My Teams
+        <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-2 px-1 text-right">
+          <Users className="w-5 h-5 text-purple-500" /> الفرق الخاصة بي
         </h3>
-        <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-2 pl-1 custom-scrollbar">
           {teams.map(team => (
             <button
               key={team.id}
               onClick={() => handleTeamSelect(team)}
-              className={`w-full text-left p-3 rounded-xl transition-all ${
+              className={`w-full text-right p-3 rounded-xl transition-all ${
                 selectedTeam?.id === team.id
                   ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
                   : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700'
@@ -73,52 +73,53 @@ export default function ProfessorChat() {
               </p>
             </button>
           ))}
-          {teams.length === 0 && (
-            <p className="text-sm text-slate-400 p-2 text-center">No teams assigned yet.</p>
+          {!loading && teams.length === 0 && (
+            <p className="text-sm text-slate-400 p-2 text-center italic">لا يوجد فرق مسندة حالياً</p>
           )}
         </div>
       </div>
 
       {/* 2. Channels Sidebar (Global + Private DMs) */}
       {selectedTeam && (
-        <div className="w-full md:w-56 flex flex-col gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-100 dark:border-slate-700">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm mb-2 px-2 mt-2">Channels</h3>
+        <div className="w-full md:w-60 flex flex-col gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-100 dark:border-slate-700">
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm mb-2 px-2 mt-2 text-right italic opacity-70">القنوات</h3>
           
           <button
             onClick={() => setSelectedStudent('global')}
-            className={`w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-3 ${
+            className={`w-full text-right p-2.5 rounded-xl transition-all flex items-center gap-3 ${
               selectedStudent === 'global'
                 ? 'bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 font-bold text-slate-800 dark:text-white'
                 : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
             }`}
           >
             <Hash className="w-4 h-4 opacity-70" />
-            <span className="text-sm">Team Chat</span>
+            <span className="text-sm">الشات الجماعي للمشروع</span>
           </button>
 
           <div className="pt-3 pb-1 px-2 border-t border-slate-200 dark:border-slate-700/50 mt-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Private Direct Messages</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">المحادثات الخاصة بالطلاب</p>
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-1 custom-scrollbar">
-            {teamStudents.map(st => (
+            {teamStudents.length > 0 ? teamStudents.map(st => (
               <button
                 key={st.id}
                 onClick={() => setSelectedStudent(st)}
-                className={`w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-3 ${
+                className={`w-full text-right p-2.5 rounded-xl transition-all flex items-center gap-3 ${
                   selectedStudent?.id === st.id
                     ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 font-bold border border-purple-100 dark:border-purple-800/30'
                     : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white flex-shrink-0 text-[10px] font-bold shadow-sm">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white flex-shrink-0 text-xs font-bold shadow-sm">
                   {st.name.charAt(0)}
                 </div>
                 <span className="text-sm truncate">{st.name}</span>
               </button>
-            ))}
-            {teamStudents.length === 0 && (
-              <p className="text-xs text-slate-400 p-2 text-center">No students found.</p>
+            )) : (
+              <div className="p-4 text-center">
+                 <Loader2 className="w-4 h-4 animate-spin text-slate-300 mx-auto" />
+              </div>
             )}
           </div>
         </div>
@@ -129,15 +130,16 @@ export default function ProfessorChat() {
         {selectedTeam ? (
           <div className="h-full relative [&>div]:h-full [&>div]:border-none [&>div]:shadow-none">
             {selectedStudent === 'global' ? (
-              <StudentChat teamId={selectedTeam.id} teamName={`${selectedTeam.name} - Global Workspace`} />
+              <StudentChat teamId={selectedTeam.id} teamName={`${selectedTeam.name}`} />
             ) : (
               <PrivateStudentChat teamId={selectedTeam.id} student={selectedStudent} />
             )}
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-            <MessageSquare className="w-12 h-12 mb-3 opacity-20" />
-            <p className="text-sm">Select a team and channel to start chatting</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center">
+            <MessageSquare className="w-16 h-16 mb-4 opacity-10" />
+            <h4 className="font-bold text-slate-600 dark:text-slate-400 mb-1">ابدأ المحادثة</h4>
+            <p className="text-sm opacity-70">اختر فريقاً من القائمة الجانبية للبدء في التواصل مع الطلاب أو الفريق بأكمله.</p>
           </div>
         )}
       </div>
