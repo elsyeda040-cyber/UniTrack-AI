@@ -71,6 +71,7 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     team_id = Column(String, ForeignKey('teams.id'))
     sender_id = Column(String, ForeignKey('users.id'))
+    recipient_id = Column(String, ForeignKey('users.id'), nullable=True) # New column for private 1-on-1 chat
     text = Column(String, nullable=True)
     type = Column(String, default="text") # text, voice, image, file
     url = Column(String, nullable=True)

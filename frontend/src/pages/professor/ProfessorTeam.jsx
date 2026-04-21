@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { teamService, adminService } from '../../services/api';
 import { ArrowLeft, Plus, Star, CheckCircle2, Clock, Circle, MessageSquare, FileText, Send, Calendar, Loader2 } from 'lucide-react';
+import PrivateStudentChat from '../../components/PrivateStudentChat';
 
 export default function ProfessorTeam() {
   const { teamId } = useParams();
@@ -188,15 +189,23 @@ export default function ProfessorTeam() {
                   <span className="font-bold text-slate-700 dark:text-white text-sm">{student.score}</span>
                 </div>
                 {selectedStudent === student.id && (
-                  <div className="ml-12 mt-2 space-y-2 animate-fade-in">
-                    <input type="number" placeholder="Score (0-100)" value={scoreInput} onChange={e => setScoreInput(e.target.value)} className="input text-sm" min="0" max="100" />
-                    <input placeholder="Feedback..." value={feedbackInput} onChange={e => setFeedbackInput(e.target.value)} className="input text-sm" />
-                    <button 
-                      onClick={() => handleSaveEvaluation(student.id)}
-                      className={`btn-primary text-xs w-full justify-center py-2 ${saveSuccess ? 'bg-emerald-500' : ''}`}
-                    >
-                      {saveSuccess ? '✅ Saved!' : <><Send className="w-3 h-3" /> Save Evaluation</>}
-                    </button>
+                  <div className="ml-12 mt-4 space-y-4 animate-fade-in">
+                    {/* Private Chat Interface */}
+                    <div className="mb-4">
+                       <PrivateStudentChat teamId={teamId} student={student} />
+                    </div>
+                    {/* Grading Form */}
+                    <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Student Evaluation</h4>
+                      <input type="number" placeholder="Score (0-100)" value={scoreInput} onChange={e => setScoreInput(e.target.value)} className="input text-sm" min="0" max="100" />
+                      <input placeholder="Feedback..." value={feedbackInput} onChange={e => setFeedbackInput(e.target.value)} className="input text-sm" />
+                      <button 
+                        onClick={() => handleSaveEvaluation(student.id)}
+                        className={`btn-primary text-xs w-full justify-center py-2 ${saveSuccess ? 'bg-emerald-500' : ''}`}
+                      >
+                        {saveSuccess ? '✅ Saved!' : <><Send className="w-3 h-3" /> Save Evaluation</>}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

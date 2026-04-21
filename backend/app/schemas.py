@@ -81,6 +81,7 @@ class TeamResponse(TeamBase):
 class MessageBase(BaseModel):
     team_id: Optional[str] = None
     sender_id: str
+    recipient_id: Optional[str] = None
     text: Optional[str] = None
     type: str = "text"
     url: Optional[str] = None

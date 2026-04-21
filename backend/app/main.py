@@ -471,8 +471,21 @@ def get_notifications(user_id: str, db: Session = Depends(get_db)):
 
 # Chat Endpoints
 @app.get("/teams/{team_id}/messages", response_model=List[schemas.MessageResponse])
-def get_messages(team_id: str, db: Session = Depends(get_db)):
-    messages = db.query(models.Message).filter(models.Message.team_id == team_id).all()
+def get_messages(team_id: str, sender_id: str = None, recipient_id: str = None, db: Session = Depends(get_db)):
+    query = db.query(models.Message).filter(models.Message.team_id == team_id)
+    
+    if sender_id and recipient_id:
+        from sqlalchemy import or_, and_
+        query = query.filter(
+            or_(
+                and_(models.Message.sender_id == sender_id, models.Message.recipient_id == recipient_id),
+                and_(models.Message.sender_id == recipient_id, models.Message.recipient_id == sender_id)
+            )
+        )
+    else:
+        query = query.filter(models.Message.recipient_id == None)
+        
+    messages = query.all()
     result = []
     for msg in messages:
         user = db.query(models.User).filter(models.User.id == msg.sender_id).first()
@@ -551,20 +564,23 @@ def create_message(team_id: str, msg: schemas.MessageBase, db: Session = Depends
              team = db.query(models.Team).filter(models.Team.id.ilike(team_id)).first()
         
         if team:
-            # 2. Collect ALL potential member IDs
-            recipient_ids = []
-            
-            # Query the association table directly for students
-            student_links = db.query(models.team_students).filter(models.team_students.c.team_id == team.id).all()
-            for link in student_links:
-                recipient_ids.append(link.student_id)
-            
-            if team.professor_id: recipient_ids.append(team.professor_id)
-            if team.assistant_id: recipient_ids.append(team.assistant_id)
-            
-            # 3. Filter: unique, not the sender (case-insensitive)
-            sender_id_lower = str(msg.sender_id).lower()
-            final_recipients = set([r for r in recipient_ids if str(r).lower() != sender_id_lower])
+            if msg.recipient_id:
+                final_recipients = set([msg.recipient_id])
+            else:
+                # 2. Collect ALL potential member IDs
+                recipient_ids = []
+                
+                # Query the association table directly for students
+                student_links = db.query(models.team_students).filter(models.team_students.c.team_id == team.id).all()
+                for link in student_links:
+                    recipient_ids.append(link.student_id)
+                
+                if team.professor_id: recipient_ids.append(team.professor_id)
+                if team.assistant_id: recipient_ids.append(team.assistant_id)
+                
+                # 3. Filter: unique, not the sender (case-insensitive)
+                sender_id_lower = str(msg.sender_id).lower()
+                final_recipients = set([r for r in recipient_ids if str(r).lower() != sender_id_lower])
             
             sender = db.query(models.User).filter(models.User.id == msg.sender_id).first()
             sender_display_name = sender.name if sender else "Member"
@@ -574,13 +590,13 @@ def create_message(team_id: str, msg: schemas.MessageBase, db: Session = Depends
                 notif = models.Notification(
                     user_id=r_id,
                     type="chat",
-                    title=f"Chat: {sender_display_name}",
+                    title=f"Private msg: {sender_display_name}" if msg.recipient_id else f"Chat: {sender_display_name}",
                     message=text_preview,
                     time=datetime.now().isoformat(),
                     read=False
                 )
                 db.add(notif)
-                print(f"DEBUG: Notifying {r_id} about message from {sender_id_lower}")
+                print(f"DEBUG: Notifying {r_id} about message from {str(msg.sender_id)}")
 
         db.commit()
         db.refresh(new_msg)

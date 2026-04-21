@@ -12,6 +12,8 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
   const activeTeamId = propTeamId || user?.teamId;
   const activeTeamName = propTeamName || 'Workspace Chat';
   const [messages, setMessages] = useState([]);
+  const [chatMode, setChatMode] = useState('global'); // 'global' or 'mentor'
+  const [teamObj, setTeamObj] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef(null);
@@ -40,12 +42,16 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
       setLoading(false);
       return;
     }
+    const loadTeam = async () => {
+      try { const res = await teamService.getTeam(activeTeamId); setTeamObj(res.data); } catch(e){}
+    };
+    loadTeam();
     fetchMessages();
     const interval = setInterval(() => {
       fetchMessages(true);
     }, 3000); // 3-second polling
     return () => clearInterval(interval);
-  }, [activeTeamId]);
+  }, [activeTeamId, chatMode]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
 
@@ -124,7 +130,12 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
 
   const fetchMessages = async (isBackground = false) => {
     try {
-      const res = await teamService.getMessages(activeTeamId);
+      let res;
+      if (chatMode === 'mentor' && teamObj?.professor_id) {
+        res = await teamService.getMessages(activeTeamId, teamObj.professor_id);
+      } else {
+        res = await teamService.getMessages(activeTeamId);
+      }
       setMessages(res.data);
     } catch (err) {
       console.error("Failed to fetch messages", err);
@@ -169,7 +180,11 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
     };
 
     try {
-      await teamService.sendMessage(activeTeamId, payload);
+      if (chatMode === 'mentor' && teamObj?.professor_id) {
+        await teamService.sendMessage(activeTeamId, payload, teamObj.professor_id);
+      } else {
+        await teamService.sendMessage(activeTeamId, payload);
+      }
       // لا حاجة لتحديث الرسالة - هي اتعرضت بالفعل من الـ local state
     } catch (err) {
       // لو فشل الإرسال، امسح الرسالة المؤقتة
@@ -326,13 +341,29 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
             {activeTeamName.charAt(0)}
           </div>
           <div>
-            <h3 className="font-bold text-slate-800 dark:text-white leading-tight">{activeTeamName}</h3>
+            <h3 className="font-bold text-slate-800 dark:text-white leading-tight">
+              {chatMode === 'global' ? activeTeamName : 'Private Inbox (Mentor)'}
+            </h3>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
               <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Active Workspace</span>
             </div>
           </div>
         </div>
+        
+        <div className="flex items-center gap-2">
+          {teamObj?.professor_id && (
+            <button 
+              onClick={() => { setChatMode(m => m === 'global' ? 'mentor' : 'global'); setMessages([]); setLoading(true); }}
+              className={`px-3 py-1.5 rounded-lg font-medium text-xs border ${
+                chatMode === 'mentor' 
+                ? 'bg-purple-600 text-white border-purple-600' 
+                : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50'
+              } transition-colors`}
+            >
+              {chatMode === 'global' ? 'Open Mentor DM' : 'Back to Team'}
+            </button>
+          )}
         
         <button 
           type="button"
