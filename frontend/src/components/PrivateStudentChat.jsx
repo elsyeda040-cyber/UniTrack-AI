@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useApp } from '../../context/AppContext';
-import { teamService } from '../../services/api';
+import { useApp } from '../context/AppContext';
+import { teamService } from '../services/api';
 import { Send, Loader2, User } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 

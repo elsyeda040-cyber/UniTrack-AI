@@ -374,20 +374,21 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
               {chatMode === 'global' ? 'تواصل مع المشرف' : 'العودة للشات العام'}
             </button>
           )}
-        
-        <button 
-          type="button"
-          onClick={(e) => { e.preventDefault(); handleGetSummary(); }}
-          disabled={isSummarizing}
-          className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all font-bold text-xs group border border-blue-100 dark:border-blue-800"
-        >
-          {isSummarizing ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Sparkles className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-          )}
-          <span>ملخص الذكاء الاصطناعي</span>
-        </button>
+          
+          <button 
+            type="button"
+            onClick={(e) => { e.preventDefault(); handleGetSummary(); }}
+            disabled={isSummarizing}
+            className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all font-bold text-xs group border border-blue-100 dark:border-blue-800"
+          >
+            {isSummarizing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+            )}
+            <span>ملخص الذكاء الاصطناعي</span>
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-4 px-1 pb-2 scrollbar-hide">
@@ -397,100 +398,101 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
           const msgSender = isOwn ? (user.name || 'Me') : (msg.sender || 'Member');
           const msgRole = isOwn ? (user.role || 'student') : (msg.role || 'student');
           return (
-          <div key={msg.id || idx} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
-            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold bg-gradient-to-br ${roleColor[msgRole] || 'from-slate-400 to-slate-500'}`}>
-              {String(msgSender || 'U').charAt(0)}
-            </div>
-            <div className={`max-w-xs lg:max-w-md ${isOwn ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-              {!isOwn && <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{msgSender}</p>}
-              <div className={`group relative px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                isOwn
-                  ? 'bg-blue-600 text-white rounded-tr-sm'
-                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-card rounded-tl-sm'
-              } ${msg.type === 'image' ? 'p-1' : ''}`}>
-                
-                {/* Edit/Delete Menu Button */}
-                {isOwn && !editingMsgId && (
-                  <div className="absolute top-1/2 -left-8 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="relative">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === msg.id ? null : msg.id); }}
-                        className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                      
-                      {activeMenuId === msg.id && (
-                        <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl py-1 z-20 min-w-[110px] animate-fade-in" onClick={e => e.stopPropagation()}>
-                          <button 
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingMsgId(msg.id); setEditValue(msg.text || ""); setActiveMenuId(null); }}
-                            className="w-full text-right flex items-center justify-end gap-2 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                          >
-                            تعديل <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(msg.id); setActiveMenuId(null); }}
-                            className="w-full text-right flex items-center justify-end gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                          >
-                            حذف <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {editingMsgId === msg.id ? (
-                  <div className="flex flex-col gap-2 min-w-[180px]" onClick={e => e.stopPropagation()}>
-                    <textarea 
-                      value={editValue || ""}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      className="bg-white/20 text-white placeholder-white/50 border border-white/30 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 resize-none w-full"
-                      rows={2}
-                      autoFocus
-                    />
-                    <div className="flex justify-end gap-2">
-                       <button type="button" onClick={(e) => { e.preventDefault(); setEditingMsgId(null); }} className="px-2 py-1 bg-white/10 rounded-md hover:bg-white/20 text-[10px] font-bold">إلغاء</button>
-                       <button type="button" onClick={(e) => { e.preventDefault(); handleUpdate(msg.id); }} className="px-2 py-1 bg-white text-blue-600 rounded-md hover:bg-blue-50 text-[10px] font-bold flex items-center gap-1">حفظ <CheckCircle2 className="w-3 h-3" /></button>
-                    </div>
-                  </div>
-                ) : msg.type === 'voice' ? (
-                  <AudioPlayer url={msg.url} duration={msg.duration} />
-                ) : msg.type === 'image' ? (
-                  <div className="space-y-2">
-                    <img src={msg.url} alt="Uploaded" className="rounded-xl max-w-full h-auto max-h-60 object-cover" />
-                  </div>
-                ) : msg.type === 'file' ? (
-                  <div className="flex items-center gap-3 min-w-[160px]">
-                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold truncate">{msg.file_name}</p>
-                      <p className="text-[10px] opacity-70">{msg.file_size}</p>
-                    </div>
-                    <button className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"><Download className="w-4 h-4" /></button>
-                  </div>
-                ) : (
-                  msg.text
-                )}
+            <div key={msg.id || idx} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
+              <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold bg-gradient-to-br ${roleColor[msgRole] || 'from-slate-400 to-slate-500'}`}>
+                {String(msgSender || 'U').charAt(0)}
               </div>
-              <p className="text-xs text-slate-400 font-mono tracking-tighter">
-                {(() => {
-                  const timeStr = msg.time || new Date().toISOString();
-                  try {
-                    const dateObj = new Date(typeof timeStr === 'string' && timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
-                    return isNaN(dateObj.getTime()) ? "..." : dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                  } catch (e) {
-                    return "...";
-                  }
-                })()}
-              </p>
+              <div className={`max-w-xs lg:max-w-md ${isOwn ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                {!isOwn && <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{msgSender}</p>}
+                <div className={`group relative px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  isOwn
+                    ? 'bg-blue-600 text-white rounded-tr-sm'
+                    : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-card rounded-tl-sm'
+                } ${msg.type === 'image' ? 'p-1' : ''}`}>
+                  
+                  {/* Edit/Delete Menu Button */}
+                  {isOwn && !editingMsgId && (
+                    <div className="absolute top-1/2 -left-8 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="relative">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === msg.id ? null : msg.id); }}
+                          className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        
+                        {activeMenuId === msg.id && (
+                          <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl py-1 z-20 min-w-[110px] animate-fade-in" onClick={e => e.stopPropagation()}>
+                            <button 
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingMsgId(msg.id); setEditValue(msg.text || ""); setActiveMenuId(null); }}
+                              className="w-full text-right flex items-center justify-end gap-2 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                            >
+                              تعديل <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(msg.id); setActiveMenuId(null); }}
+                              className="w-full text-right flex items-center justify-end gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            >
+                              حذف <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {editingMsgId === msg.id ? (
+                    <div className="flex flex-col gap-2 min-w-[180px]" onClick={e => e.stopPropagation()}>
+                      <textarea 
+                        value={editValue || ""}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="bg-white/20 text-white placeholder-white/50 border border-white/30 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 resize-none w-full"
+                        rows={2}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                         <button type="button" onClick={(e) => { e.preventDefault(); setEditingMsgId(null); }} className="px-2 py-1 bg-white/10 rounded-md hover:bg-white/20 text-[10px] font-bold">إلغاء</button>
+                         <button type="button" onClick={(e) => { e.preventDefault(); handleUpdate(msg.id); }} className="px-2 py-1 bg-white text-blue-600 rounded-md hover:bg-blue-50 text-[10px] font-bold flex items-center gap-1">حفظ <CheckCircle2 className="w-3 h-3" /></button>
+                      </div>
+                    </div>
+                  ) : msg.type === 'voice' ? (
+                    <AudioPlayer url={msg.url} duration={msg.duration} />
+                  ) : msg.type === 'image' ? (
+                    <div className="space-y-2">
+                      <img src={msg.url} alt="Uploaded" className="rounded-xl max-w-full h-auto max-h-60 object-cover" />
+                    </div>
+                  ) : msg.type === 'file' ? (
+                    <div className="flex items-center gap-3 min-w-[160px]">
+                      <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate">{msg.file_name}</p>
+                        <p className="text-[10px] opacity-70">{msg.file_size}</p>
+                      </div>
+                      <button className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"><Download className="w-4 h-4" /></button>
+                    </div>
+                  ) : (
+                    msg.text
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 font-mono tracking-tighter">
+                  {(() => {
+                    const timeStr = msg.time || new Date().toISOString();
+                    try {
+                      const dateObj = new Date(typeof timeStr === 'string' && timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
+                      return isNaN(dateObj.getTime()) ? "..." : dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    } catch (e) {
+                      return "...";
+                    }
+                  })()}
+                </p>
+              </div>
             </div>
-          </div>
-        )})}
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 
