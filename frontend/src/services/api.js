@@ -28,7 +28,10 @@ export const teamService = {
   createTask: (teamId, data) => api.post(`/teams/${teamId}/tasks`, data),
   updateStudentEvaluation: (userId, data) => api.put(`/users/${userId}/evaluation`, data),
   updateTask: (taskId, data) => api.put(`/tasks/${taskId}`, data),
-  getMessages: (teamId, recipientId = null) => api.get(`/teams/${teamId}/messages`, { params: recipientId ? { recipient_id: recipientId } : {} }),
+  getMessages: (teamId, recipientId = null, senderId = null) => api.get(`/teams/${teamId}/messages`, { params: { 
+    ...(recipientId && { recipient_id: recipientId }),
+    ...(senderId && { sender_id: senderId })
+  } }),
   sendMessage: (teamId, data, recipientId = null) => api.post(`/teams/${teamId}/messages`, { ...data, recipient_id: recipientId }),
   getChatSummary: (teamId) => api.post(`/teams/${teamId}/chat-summary`),
   updateMessage: (teamId, msgId, data) => api.put(`/teams/${teamId}/messages/${msgId}`, data),
@@ -60,7 +63,9 @@ export const teamService = {
   reviewCode: (code, language) => api.post('/ai/code-review', { code, language }),
   simulateRisk: (teamId, hypothetical_delays) => api.post(`/teams/${teamId}/simulate-risk`, { team_id: teamId, hypothetical_delays }),
   getSkillMatrix: (teamId) => api.get(`/teams/${teamId}/skill-matrix`),
-  sendVoiceCommand: (message) => api.post('/ai/voice-command', { message })
+  sendVoiceCommand: (message) => api.post('/ai/voice-command', { message }),
+  deleteFile: (teamId, fileId) => api.delete(`/teams/${teamId}/files/${fileId}`),
+  deleteAllFiles: (teamId) => api.delete(`/teams/${teamId}/files/all`)
 };
 
 export const communityService = {
@@ -95,6 +100,7 @@ export const adminService = {
 
 export const aiService = {
   chat: (message, context = null) => api.post('/ai/chat', { message, context }),
+  scrapeSyllabus: (syllabus) => api.post('/ai/scrape-syllabus', { syllabus }),
 };
 
 export default api;

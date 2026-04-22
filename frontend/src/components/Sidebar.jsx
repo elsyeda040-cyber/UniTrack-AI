@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Users, BookOpen, Shield, ClipboardList, Sun, Moon, Sparkles, Calendar, HardDrive, Star, Edit3, Book,
-  Video, ShoppingBag, Layers, Briefcase, FileCode, Monitor, Cpu, Terminal, LayoutDashboard, CheckSquare, 
+  Video, Layers, Briefcase, FileCode, Monitor, Cpu, Terminal, LayoutDashboard, CheckSquare, 
   TrendingUp, FileText, MessageCircle, Bot, BarChart2, Trophy, LogOut, Settings, Bell
 } from 'lucide-react';
 
@@ -19,15 +19,9 @@ const studentNav = [
   { to: '/student/insights', icon: BarChart2, label: 'AI Insights' },
   { to: '/student/timeline', icon: Calendar, label: 'Timeline' },
   { to: '/student/scratchpad', icon: Edit3, label: 'Scratchpad' },
-  { to: '/student/resource-library', icon: BookOpen, label: 'Library' },
   { to: '/student/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { to: '/student/reports', icon: BarChart2, label: 'Reports' },
-  { to: '/student/market', icon: ShoppingBag, label: 'Help Market' },
   { to: '/student/docs', icon: FileCode, label: 'AI Docs' },
-  { to: '/student/career', icon: Briefcase, label: 'Career' },
-  { to: '/student/presentation-coach', icon: Monitor, label: 'Pres Coach' },
-  { to: '/student/code-mentor', icon: Terminal, label: 'Code Mentor' },
-  { to: '/student/skill-matrix', icon: Cpu, label: 'Skill Matrix' },
   { to: '/student/notifications', icon: Bell, label: 'Notifications' },
 ];
 
@@ -45,7 +39,6 @@ const professorNav = [
   { to: '/professor/timeline', icon: Calendar, label: 'Timeline' },
   { to: '/professor/scratchpad', icon: Edit3, label: 'Team Notes' },
   { to: '/professor/docs', icon: FileCode, label: 'AI Docs' },
-  { to: '/professor/skill-matrix', icon: Cpu, label: 'Skill Matrix' },
 ];
 
 const assistantNav = [
@@ -73,7 +66,7 @@ const navByRole = { student: studentNav, professor: professorNav, assistant: ass
 const colorByRole = { student: 'from-blue-600 to-blue-700', professor: 'from-purple-600 to-purple-700', assistant: 'from-emerald-600 to-emerald-700', admin: 'from-orange-600 to-orange-700' };
 
 export default function Sidebar() {
-  const { user, logout, darkMode, toggleDark, notifications, unreadChatCount } = useApp();
+  const { user, logout, darkMode, toggleDark, hackathonMode, toggleHackathon, notifications, unreadChatCount } = useApp();
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
 
@@ -153,6 +146,13 @@ export default function Sidebar() {
           {expanded && <span className="text-sm font-medium animate-fade-in">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
         <button
+          onClick={toggleHackathon}
+          className={`flex items-center gap-3 w-full px-2.5 py-2.5 rounded-xl transition-all ${hackathonMode ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
+        >
+          <Sparkles className={`w-5 h-5 flex-shrink-0 ${hackathonMode ? 'animate-pulse' : ''}`} />
+          {expanded && <span className="text-sm font-medium animate-fade-in">Hackathon Mode</span>}
+        </button>
+        <button
           onClick={handleLogout}
           className="flex items-center gap-3 w-full px-2.5 py-2.5 rounded-xl text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
         >
@@ -160,9 +160,12 @@ export default function Sidebar() {
           {expanded && <span className="text-sm font-medium animate-fade-in">Sign Out</span>}
         </button>
 
-        {/* User Avatar */}
-        <div className="flex items-center gap-3 px-2.5 py-2.5">
-          <div className={`w-8 h-8 flex-shrink-0 bg-gradient-to-br ${gradientColor} rounded-full flex items-center justify-center text-white text-sm font-bold`}>
+        {/* User Profile Link */}
+        <NavLink 
+          to={`/${user.role}/profile`}
+          className="flex items-center gap-3 px-2.5 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all group"
+        >
+          <div className={`w-8 h-8 flex-shrink-0 bg-gradient-to-br ${gradientColor} rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm`}>
             {user.name.charAt(0)}
           </div>
           {expanded && (
@@ -171,7 +174,12 @@ export default function Sidebar() {
               <div className="text-xs text-slate-400 capitalize">{user.role}</div>
             </div>
           )}
-        </div>
+          {!expanded && (
+            <div className="absolute left-14 bg-slate-800 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              View Profile
+            </div>
+          )}
+        </NavLink>
       </div>
     </aside>
   );

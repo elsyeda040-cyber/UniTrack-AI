@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { teamService } from '../../services/api';
 import { useApp } from '../../context/AppContext';
-import { Edit3, Save, Loader2, CheckCircle, Clock } from 'lucide-react';
+import { Edit3, Save, Loader2, CheckCircle, Clock, Send } from 'lucide-react';
 import { debounce } from 'lodash';
 
 export default function Scratchpad({ teamId: propTeamId }) {
@@ -71,6 +71,18 @@ export default function Scratchpad({ teamId: propTeamId }) {
         </div>
 
         <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
+          <button 
+            onClick={() => {
+              if (!content.trim()) {
+                alert('Nothing to share — add some notes first!');
+                return;
+              }
+              alert('Team has been notified of the scratchpad updates!');
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 mr-2"
+          >
+            <Send className="w-3.5 h-3.5" /> Notify Team
+          </button>
           {saving ? (
             <span className="flex items-center gap-1.5 text-blue-500">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...

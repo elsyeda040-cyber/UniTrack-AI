@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { teamService } from '../../services/api';
+import { MOCK_TASKS } from '../../data/mockData';
 import { CheckCircle2, Clock, Circle, MessageSquare, ChevronDown, ChevronUp, Upload, Loader2, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,13 +11,7 @@ const statusCols = [
   { key: 'completed', label: 'Completed', color: 'border-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/10', icon: CheckCircle2, iconColor: 'text-emerald-500' },
 ];
 
-const MOCK_TASKS = [
-  { id: 101, title: 'Draft Research Proposal', status: 'completed', description: 'Complete the initial draft of the methodology section', deadline: '2026-03-15', score: 95, feedback: 'Excellent depth of research. Proceed to next phase.' },
-  { id: 102, title: 'System Architecture Design', status: 'in_progress', description: 'Design database schema and component diagrams', deadline: '2026-04-05' },
-  { id: 103, title: 'Frontend UI Implementation', status: 'in_progress', description: 'Build responsive React components following Figma', deadline: '2026-04-10' },
-  { id: 104, title: 'Backend API Integration', status: 'todo', description: 'Connect frontend actions to Node.js backend endpoints', deadline: '2026-04-20' },
-  { id: 105, title: 'User Testing', status: 'todo', description: 'Conduct usability tests with 5 students', deadline: '2026-04-25' },
-];
+
 
 function TaskCard({ task }) {
   const [expanded, setExpanded] = useState(false);
@@ -72,14 +67,10 @@ export default function StudentTasks() {
   const fetchTasks = async () => {
     try {
       const res = await teamService.getTasks(user.teamId);
-      if (res.data && res.data.length > 0) {
-        setTasks(res.data);
-      } else {
-        setTasks(MOCK_TASKS);
-      }
+      setTasks(res.data || []);
     } catch (err) {
       console.error("Failed to fetch tasks", err);
-      setTasks(MOCK_TASKS);
+      setTasks([]);
     } finally {
       setLoading(false);
     }
@@ -100,12 +91,6 @@ export default function StudentTasks() {
         </div>
         <div className="flex items-center gap-3">
           <span className="badge badge-blue">{tasks.length} Tasks Total</span>
-          <button 
-            onClick={() => alert('New Task modal will open here!')}
-            className="btn-primary text-sm flex items-center gap-1.5"
-          >
-            <Plus className="w-4 h-4" /> Add Task
-          </button>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

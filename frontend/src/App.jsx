@@ -55,10 +55,9 @@ import ResourceLibrary from './pages/shared/ResourceLibrary';
 import PerformanceInsights from './pages/shared/PerformanceInsights';
 import Leaderboard from './pages/shared/Leaderboard';
 import CareerNavigator from './pages/shared/CareerNavigator';
-import CommunityMarket from './pages/shared/CommunityMarket';
 import ProjectDocs from './pages/shared/ProjectDocs';
-import PresentationCoach from './pages/shared/PresentationCoach';
-import CodeMentor from './pages/shared/CodeMentor';
+
+
 import SkillMatrix from './pages/shared/SkillMatrix';
 import GlobalVoiceControl from './components/GlobalVoiceControl';
 
@@ -88,7 +87,6 @@ export default function App() {
           <Route path="files" element={<StudentFiles />} />
           <Route path="chat" element={<StudentChat />} />
           <Route path="ai" element={<StudentAI />} />
-          <Route path="leaderboard" element={<StudentLeaderboard />} />
           <Route path="reports" element={<StudentReports />} />
           <Route path="notifications" element={<StudentNotifications />} />
           <Route path="submissions" element={<StudentFiles />} />
@@ -96,15 +94,9 @@ export default function App() {
           <Route path="project-files" element={<FileManager />} />
           <Route path="peer-review" element={<PeerReview />} />
           <Route path="scratchpad" element={<Scratchpad />} />
-          <Route path="resource-library" element={<ResourceLibrary />} />
           <Route path="insights" element={<PerformanceInsights />} />
           <Route path="leaderboard" element={<Leaderboard />} />
-          <Route path="career" element={<CareerNavigator />} />
-          <Route path="market" element={<CommunityMarket />} />
           <Route path="docs" element={<ProjectDocs />} />
-          <Route path="presentation-coach" element={<PresentationCoach />} />
-          <Route path="code-mentor" element={<CodeMentor />} />
-          <Route path="skill-matrix" element={<SkillMatrix />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 
@@ -121,9 +113,7 @@ export default function App() {
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="teams" element={<ProfessorTeams />} />
           <Route path="docs" element={<ProjectDocs />} />
-          <Route path="skill-matrix" element={<SkillMatrix />} />
           <Route path="tasks" element={<ProfessorTasks />} />
-          <Route path="grades" element={<ProfessorGrades />} />
           <Route path="grades" element={<ProfessorGrades />} />
           <Route path="notifications" element={<ProfessorNotifications />} />
           <Route path="profile" element={<ProfilePage />} />

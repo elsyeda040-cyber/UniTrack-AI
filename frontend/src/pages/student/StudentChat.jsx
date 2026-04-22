@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { teamService } from '../../services/api';
-import { Send, Paperclip, Mic, Trash2, Play, FileText, Download, Loader2, Sparkles, X, Edit2, CheckCircle2, MoreVertical } from 'lucide-react';
+import { Send, Paperclip, Mic, Trash2, Play, FileText, Download, Loader2, Sparkles, X, Edit2, CheckCircle2, MoreVertical, User } from 'lucide-react';
 
 const roleColor = { professor: 'from-purple-500 to-purple-600', assistant: 'from-emerald-500 to-emerald-600', student: 'from-blue-500 to-blue-600' };
 
@@ -141,7 +141,7 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
     try {
       let res;
       if (chatMode === 'mentor' && teamObj?.professor_id) {
-        res = await teamService.getMessages(activeTeamId, teamObj.professor_id);
+        res = await teamService.getMessages(activeTeamId, teamObj.professor_id, user.id);
       } else {
         res = await teamService.getMessages(activeTeamId);
       }

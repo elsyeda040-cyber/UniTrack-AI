@@ -10,6 +10,7 @@ class UserBase(BaseModel):
     avatar: Optional[str] = None
     bio: Optional[str] = None
     credits: int = 100
+    feedback: Optional[str] = None
     skills: Optional[str] = None
 
 class UserCreate(UserBase):
@@ -70,6 +71,7 @@ class TaskCreate(BaseModel):
 class UserEvaluationUpdate(BaseModel):
     score: int
     feedback: Optional[str] = None
+    skills: Optional[str] = None
 
 class TeamResponse(TeamBase):
     professor: Optional[UserResponse] = None

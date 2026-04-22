@@ -14,6 +14,15 @@ export const AppProvider = ({ children }) => {
   const [notifications, setNotifications] = useState(0);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [hackathonMode, setHackathonMode] = useState(() => {
+    return localStorage.getItem('unitrack_hackathon') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('unitrack_hackathon', hackathonMode);
+    if (hackathonMode) document.documentElement.classList.add('hackathon-active');
+    else document.documentElement.classList.remove('hackathon-active');
+  }, [hackathonMode]);
 
   useEffect(() => {
     if (user) {
@@ -23,25 +32,25 @@ export const AppProvider = ({ children }) => {
       const interval = setInterval(() => {
         syncProfile();
         fetchNotifications();
-      }, 5000); 
+      }, 30000); // ← 30 ثانية بدل 5 ثواني
       return () => clearInterval(interval);
     } else {
       localStorage.removeItem('unitrack_user');
     }
-  }, [user]);
+  }, [user?.id]); // ← نتابع id فقط مش كل الـ object عشان نمنع infinite loop
 
   const syncProfile = async () => {
     if (!user) return;
     try {
       const res = await userService.getProfile(user.id);
+      // تحديث هادي للـ state بدون reload مزعج
       if (res.data.teamId !== user.teamId) {
-        setUser(res.data);
-        window.location.reload();
+        setUser(prev => ({ ...prev, teamId: res.data.teamId }));
       }
     } catch (err) {
       console.error("Profile sync failed", err);
-      if (err.response?.status === 404) {
-        console.log("User no longer exists. Logging out...");
+      if (err.response?.status === 401 || err.response?.status === 404) {
+        console.log("Session expired or user not found. Logging out...");
         logout();
       }
     }
@@ -105,6 +114,10 @@ export const AppProvider = ({ children }) => {
     setDarkMode(d => !d);
   };
 
+  const toggleHackathon = () => {
+    setHackathonMode(h => !h);
+  };
+
   const updateUser = async (newData) => {
     try {
       const res = await userService.updateProfile(user.id, { ...user, ...newData });
@@ -117,6 +130,7 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{ 
       user, login, logout, darkMode, toggleDark, 
+      hackathonMode, toggleHackathon,
       notifications, setNotifications, unreadChatCount, clearChatBadge,
       updateUser, loading 
     }}>

@@ -2,20 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { teamService } from '../../services/api';
-import { CheckCircle2, Clock, AlertCircle, TrendingUp, Star, Trophy, ArrowRight, Loader2, FileText, Calendar, ShoppingBag, Briefcase, ChevronRight, Sparkles } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, TrendingUp, Star, Trophy, ArrowRight, Loader2, FileText, Calendar, ChevronRight, Sparkles } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import RiskSimulator from './RiskSimulator';
 
 const PROGRESS_HISTORY = [
-  { week: 'W1', progress: 10 }, { week: 'W2', progress: 22 }, { week: 'W3', progress: 38 },
-  { week: 'W4', progress: 50 }, { week: 'W5', progress: 60 }, { week: 'W6', progress: 68 },
-];
-
-const MOCK_TASKS = [
-  { id: 101, title: 'Draft Research Proposal', status: 'completed', deadline: '2026-03-15' },
-  { id: 102, title: 'System Architecture Design', status: 'in_progress', deadline: '2026-04-05' },
-  { id: 103, title: 'Frontend UI Implementation', status: 'in_progress', deadline: '2026-04-10' },
-  { id: 104, title: 'Backend API Integration', status: 'todo', deadline: '2026-04-20' },
+  { week: 'W1', progress: 0 }, { week: 'W2', progress: 0 }, { week: 'W3', progress: 0 },
+  { week: 'W4', progress: 0 }, { week: 'W5', progress: 0 }, { week: 'W6', progress: 0 },
 ];
 
 const statusConfig = {
@@ -38,7 +31,7 @@ const StatCard = ({ icon: Icon, label, value, sub, color }) => (
 );
 
 export default function StudentDashboard() {
-  const { user } = useApp();
+  const { user, hackathonMode } = useApp();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,6 +58,7 @@ export default function StudentDashboard() {
   const completed = tasks.filter(t => t.status === 'completed').length;
   const inProgress = tasks.filter(t => t.status === 'in_progress').length;
   const todo = tasks.filter(t => t.status === 'todo').length;
+  const progressPercent = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
 
   if (loading) return (
     <div className="h-64 flex items-center justify-center">
@@ -80,7 +74,7 @@ export default function StudentDashboard() {
           <h2 className="text-2xl font-bold">{user?.name}</h2>
           <p className="text-blue-200 mt-1 opacity-90">Academic Progress Tracker</p>
           <div className="flex items-center gap-3 mt-3">
-            <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold">🏅 Rank #{user?.rank || 1} in Team</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold">🏅 Rank #{user?.rank || '—'} in Team</span>
             <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold">⭐ Score: {user?.score || 0}/100</span>
           </div>
         </div>
@@ -89,7 +83,7 @@ export default function StudentDashboard() {
             <TrendingUp className="w-10 h-10" />
           </div>
           <p className="text-sm text-blue-200">Current Progress</p>
-          <p className="text-3xl font-bold">{Math.round((completed / (tasks.length || 1)) * 100)}%</p>
+          <p className="text-3xl font-bold">{progressPercent}%</p>
         </div>
       </div>
 
@@ -153,57 +147,23 @@ export default function StudentDashboard() {
           </div>
           <div className="space-y-4">
              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 text-center">
-                <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Active Team</p>
-                <p className="text-lg font-bold text-slate-700 dark:text-white">{user?.teamId || 'T1042 - Alpha Team'}</p>
-             </div>
-             
-             {/* Futuristic Risk Simulator */}
-             <RiskSimulator />
+                 <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Active Team</p>
+                 <p className="text-lg font-bold text-slate-700 dark:text-white">{user?.teamId || 'No Team Assigned'}</p>
+              </div>
+              
+              <RiskSimulator />
 
-             <button onClick={() => alert('Viewing team details...')} className="w-full btn-primary py-2 text-sm mt-2">View Team Workspace</button>
-          </div>
+              <Link to="/student/chat" className="w-full btn-primary py-2 text-sm mt-2 block text-center">Open Team Chat</Link>
+           </div>
         </div>
       </div>
 
-      {/* Row with expanded features accessibility */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="card bg-slate-900 dark:bg-white text-white dark:text-slate-900 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all">
-             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 dark:bg-slate-900/10 rounded-full group-hover:scale-150 transition-transform" />
-             <div className="relative z-10 flex flex-col items-center py-4 text-center">
-                <Sparkles className="w-8 h-8 mb-4 text-amber-400" />
-                <h4 className="font-bold">Hackathon Mode</h4>
-                <p className="text-[10px] opacity-70 mb-4 px-8">Intense productivity sprint active.</p>
-                <div className="w-12 h-6 bg-emerald-500 rounded-full relative">
-                   <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
-                </div>
-             </div>
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+          <div className="card bg-gradient-to-br from-indigo-500 to-indigo-700 text-white p-6 relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+             <h4 className="font-bold mb-1">Platform Launched! 🚀</h4>
+             <p className="text-[11px] opacity-80 leading-relaxed">Welcome to UniTrack AI. Start collaborating with your team now.</p>
           </div>
-
-          <Link to="/student/career" className="card group hover:border-indigo-500 transition-all border-2 border-transparent">
-             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center">
-                   <Briefcase className="w-6 h-6" />
-                </div>
-                <div>
-                   <h4 className="font-bold text-slate-800 dark:text-white">Career Navigator</h4>
-                   <p className="text-xs text-slate-400">Map your skills to the market.</p>
-                </div>
-                <ChevronRight className="w-4 h-4 ml-auto text-slate-300 group-hover:translate-x-1 transition-all" />
-             </div>
-          </Link>
-
-          <Link to="/student/market" className="card group hover:border-emerald-500 transition-all border-2 border-transparent">
-             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center">
-                   <ShoppingBag className="w-6 h-6" />
-                </div>
-                <div>
-                   <h4 className="font-bold text-slate-800 dark:text-white">Help Market</h4>
-                   <p className="text-xs text-slate-400">Collaborate and earn credits.</p>
-                </div>
-                <ChevronRight className="w-4 h-4 ml-auto text-slate-300 group-hover:translate-x-1 transition-all" />
-             </div>
-          </Link>
       </div>
 
       <div className="card">

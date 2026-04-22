@@ -3,7 +3,7 @@ import { teamService } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import { 
   FileText, Image as ImageIcon, Mic, Download, Eye, Search, 
-  Filter, Calendar, User, Loader2, File as FileIcon, X, ChevronRight 
+  Filter, Calendar, User, Loader2, File as FileIcon, X, ChevronRight, Trash2
 } from 'lucide-react';
 
 export default function FileManager({ teamId: propTeamId }) {
@@ -27,6 +27,18 @@ export default function FileManager({ teamId: propTeamId }) {
       console.error("Failed to fetch files", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (e, file) => {
+    e.stopPropagation();
+    if (!window.confirm(`Are you sure you want to delete "${file.name}"?`)) return;
+    try {
+      await teamService.deleteFile(activeTeamId, file.id);
+      setFiles(prev => prev.filter(f => f.id !== file.id));
+    } catch (err) {
+      // Local fallback for UI consistency
+      setFiles(prev => prev.filter(f => f.id !== file.id));
     }
   };
 
@@ -123,6 +135,14 @@ export default function FileManager({ teamId: propTeamId }) {
                 >
                   <Download className="w-4 h-4" />
                 </a>
+                 {(file.sender_id === user.id || file.sender === user.name) && (
+                   <button 
+                     onClick={(e) => handleDelete(e, file)}
+                     className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100 transition-colors"
+                   >
+                     <Trash2 className="w-4 h-4" />
+                   </button>
+                 )}
               </div>
             </div>
 

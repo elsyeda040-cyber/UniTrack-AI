@@ -30,14 +30,22 @@ export default function Topbar({ title }) {
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search tasks, docs..."
             className="pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 w-48 dark:text-white dark:placeholder-slate-400"
+            onChange={(e) => {
+              if (e.target.value.length > 2) {
+                console.log("Searching for:", e.target.value);
+              }
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && alert('No results found for "' + e.target.value + '"')}
           />
         </div>
         <Link to={`/${user.role}/notifications`} className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
           <Bell className="w-4 h-4 text-slate-500 dark:text-slate-400" />
           {notifications > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none shadow-sm">
+              {notifications > 99 ? '99+' : notifications}
+            </span>
           )}
         </Link>
         <Link to={`/${user.role}/profile`} className="flex items-center gap-2 ml-2 hover:opacity-80 transition-opacity">

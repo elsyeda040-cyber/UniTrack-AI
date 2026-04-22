@@ -1,9 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
+import { userService } from '../../services/api';
 import { Camera, Mail, User, Shield, CheckCircle, Save, Loader2 } from 'lucide-react';
 
 export default function ProfilePage() {
   const { user, updateUser } = useApp();
+  const fileInputRef = useRef(null);
+  const [profilePic, setProfilePic] = useState(user?.avatar || null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -12,12 +17,20 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setProfilePic(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
       // 1. Update basic profile info
       await updateUser({ ...formData, avatar: profilePic || user?.avatar });
-      
+
       // 2. Update password if provided
       if (newPassword.trim()) {
         await userService.updatePassword(user.id, newPassword);
@@ -58,7 +71,7 @@ export default function ProfilePage() {
           </div>
           
           <div className="mt-4 text-center">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-white uppercase tracking-tight">{user?.name}</h2>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white uppercase tracking-tight">{user?.name || 'User'}</h2>
             <div className="flex items-center justify-center gap-2 mt-1">
               <span className="badge badge-blue">{user?.role}</span>
               <span className="flex items-center gap-1 text-xs text-emerald-500 font-medium tracking-wide">
@@ -69,30 +82,9 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {/* Sidebar Info */}
-        <div className="md:col-span-1 space-y-6">
-          <div className="card p-5">
-            <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Account Stats</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500">Joined</span>
-                <span className="text-sm font-semibold dark:text-white">Sep 2025</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500">Activity Level</span>
-                <span className="text-sm font-semibold text-emerald-500">High</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500">Projects</span>
-                <span className="text-sm font-semibold dark:text-white">12</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      <div className="space-y-6">
         {/* Main form */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="space-y-6">
           <div className="card p-6 md:p-8 space-y-6 glass-card">
             <div className="flex items-center gap-2 mb-2">
               <Shield className="w-5 h-5 text-primary-500" />
@@ -114,14 +106,21 @@ export default function ProfilePage() {
               </div>
 
               <div className="group text-left">
-                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">البريد الإلكتروني (غير قابل للتعديل)</label>
-                <div className="relative opacity-60">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">
+                  {user?.role === 'admin' ? "البريد الإلكتروني" : "البريد الإلكتروني (غير قابل للتعديل)"}
+                </label>
+                <div className={`relative ${user?.role !== 'admin' ? 'opacity-60' : ''}`}>
+                  <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${user?.role === 'admin' ? 'group-focus-within:text-primary-500' : ''}`} />
                   <input 
-                    disabled
+                    disabled={user?.role !== 'admin'}
                     type="email" 
                     value={formData.email}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-not-allowed dark:text-slate-400"
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className={`w-full pl-11 pr-4 py-3 border border-slate-200 dark:border-slate-800 rounded-2xl transition-all ${
+                      user?.role !== 'admin' 
+                        ? 'bg-slate-100 dark:bg-slate-800/50 cursor-not-allowed dark:text-slate-400' 
+                        : 'bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-primary-400 outline-none dark:text-white'
+                    }`}
                   />
                 </div>
               </div>

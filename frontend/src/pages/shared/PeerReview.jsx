@@ -11,6 +11,7 @@ export default function PeerReview({ teamId: propTeamId }) {
   const [reviewsReceived, setReviewsReceived] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(null); // ID of person being reviewed
+  const [submitted, setSubmitted] = useState(false);
 
   // Review Form State
   const [ratings, setRatings] = useState({});
@@ -54,10 +55,11 @@ export default function PeerReview({ teamId: propTeamId }) {
     }
   };
 
-  const handleSubmit = async (revieweeId) => {
-    const rating = ratings[revieweeId];
+  const handleSubmit = async (revieweeId, starRating) => {
+    if (!activeTeamId) return;
+    const rating = starRating || ratings[revieweeId];
     if (!rating) {
-      alert("يرجى اختيار التقييم (النجوم) أولاً.");
+      alert('Please select a star rating before submitting.');
       return;
     }
     setSubmitting(revieweeId);
@@ -70,10 +72,13 @@ export default function PeerReview({ teamId: propTeamId }) {
         comment: comments[revieweeId] || ""
       });
       fetchData(); // Refresh
-      alert("تم إرسال تقييمك بنجاح!");
+      setSubmitted(true);
+      setRatings({});
+      setComments({});
+      setTimeout(() => setSubmitted(false), 3000);
     } catch (err) {
-      console.error("Failed to submit review", err);
-      alert("فشل إرسال التقييم. حاول مرة أخرى.");
+      console.error('Failed to submit review', err);
+      alert('Failed to submit review. Please try again.');
     } finally {
       setSubmitting(null);
     }
@@ -129,7 +134,7 @@ export default function PeerReview({ teamId: propTeamId }) {
                         {[1, 2, 3, 4, 5].map(star => (
                           <button
                             key={star}
-                            onClick={() => setRatings(prev => ({ ...prev, [member.id]: star }))}
+                            onClick={() => handleSubmit(member.id, star)}
                             className="focus:outline-none transition-transform hover:scale-125"
                           >
                             <Star 
@@ -142,6 +147,7 @@ export default function PeerReview({ teamId: propTeamId }) {
                           </button>
                         ))}
                       </div>
+                      {submitted && <p className="text-[10px] text-emerald-500 font-bold mt-2 animate-bounce">✓ Feedback Sent!</p>}
                     </div>
 
                     <textarea
@@ -154,14 +160,16 @@ export default function PeerReview({ teamId: propTeamId }) {
 
                     <button
                       onClick={() => handleSubmit(member.id)}
-                      disabled={submitting === member.id}
+                      disabled={submitting === member.id || hasReviewed}
                       className={`w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-                        submitting === member.id
-                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                          : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20'
+                        hasReviewed 
+                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default'
+                          : submitting === member.id
+                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                            : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20'
                       }`}
                     >
-                      {submitting === member.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> حفظ التقييم</>}
+                      {submitting === member.id ? <Loader2 className="w-4 h-4 animate-spin" /> : hasReviewed ? <><CheckCircle2 className="w-4 h-4" /> تم الإرسال بنجاح</> : <><CheckCircle2 className="w-4 h-4" /> حفظ وإرسال التقييم</>}
                     </button>
                   </div>
                 </div>

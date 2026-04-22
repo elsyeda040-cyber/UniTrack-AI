@@ -9,6 +9,8 @@ export default function SkillMatrix() {
   const [teams, setTeams] = useState([]);
   const [selectedTeamId, setSelectedTeamId] = useState(user.teamId || localStorage.getItem('lastSelectedTeamId'));
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(null); // ID of student being edited
+  const [editValue, setEditValue] = useState(0);
 
   useEffect(() => {
     const init = async () => {
@@ -59,6 +61,17 @@ export default function SkillMatrix() {
     }
   };
 
+  const handleUpdateLevel = async (studentId) => {
+    try {
+      await teamService.updateStudentEvaluation(studentId, { score: editValue });
+      alert("Student expertise level updated successfully!");
+      setEditMode(null);
+      fetchMatrix();
+    } catch (err) {
+      alert("Failed to update level.");
+    }
+  };
+
   if (loading) return <div className="h-64 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
 
   return (
@@ -92,7 +105,7 @@ export default function SkillMatrix() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
            {matrix.map((member, i) => (
               <div key={i} className="card group hover:scale-[1.02] transition-all bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900">
-                 <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
                        <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 flex items-center justify-center font-black text-xl">
                           {member.name.charAt(0)}
@@ -101,14 +114,50 @@ export default function SkillMatrix() {
                           <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-tighter">{member.name}</h3>
                           <div className="flex items-center gap-1">
                              <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-                             <span className="text-[10px] font-bold text-slate-400">Expertise Level: {member.level}%</span>
+                             {editMode === member.id ? (
+                               <input 
+                                 type="number" 
+                                 value={editValue} 
+                                 onChange={e => setEditValue(parseInt(e.target.value))}
+                                 className="w-16 bg-slate-50 border border-slate-200 rounded px-1 text-[10px] font-bold"
+                               />
+                             ) : (
+                               <span className="text-[10px] font-bold text-slate-400">Expertise Level: {member.level}%</span>
+                             )}
                           </div>
                        </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-black ${member.level > 85 ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
-                       {member.level > 85 ? 'ELITE' : 'ADVANCED'}
+                    <div className="flex flex-col items-end gap-2">
+                       <div className={`px-3 py-1 rounded-full text-[10px] font-black ${member.level > 85 ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
+                          {member.level > 85 ? 'ELITE' : 'ADVANCED'}
+                       </div>
+                        {user.role === 'professor' && (
+                          <div className="flex gap-2">
+                             <button 
+                               onClick={() => {
+                                 if (editMode === member.id) {
+                                   handleUpdateLevel(member.id);
+                                 } else {
+                                   setEditMode(member.id);
+                                   setEditValue(member.level);
+                                 }
+                               }}
+                               className="px-3 py-1 rounded-lg bg-indigo-500 text-white text-[9px] font-bold hover:bg-indigo-600 transition-colors"
+                             >
+                               {editMode === member.id ? 'Save' : 'Edit'}
+                             </button>
+                             {editMode === member.id && (
+                               <button 
+                                 onClick={() => setEditMode(null)}
+                                 className="px-3 py-1 rounded-lg bg-slate-200 text-slate-600 text-[9px] font-bold hover:bg-slate-300"
+                               >
+                                 Cancel
+                               </button>
+                             )}
+                          </div>
+                        )}
                     </div>
-                 </div>
+                  </div>
 
                  <div className="flex flex-wrap gap-2">
                     {member.skills.map((skill, j) => (

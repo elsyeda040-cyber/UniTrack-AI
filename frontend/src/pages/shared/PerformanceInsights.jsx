@@ -5,32 +5,43 @@ import {
 } from 'recharts';
 import { Brain, TrendingUp, Users, MessageSquare, AlertCircle, Award } from 'lucide-react';
 import { teamService, userService } from '../../services/api';
+import { useApp } from '../../context/AppContext';
 
 const PerformanceInsights = () => {
+  const { user } = useApp();
   const [insights, setInsights] = useState(null);
   const [badges, setBadges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem('user'));
-  const teamId = user?.team_id || "team-001";
+  const teamId = user?.teamId || null;
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user) fetchData();
+    else setLoading(false);
+  }, [user?.id]);
+
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [insightsRes, badgesRes] = await Promise.all([
-        teamService.getTeamInsights(teamId),
-        userService.getBadges(user.id)
-      ]);
-      setInsights(insightsRes.data);
-      setBadges(badgesRes.data);
+      // Fetch badges always, insights only if user has a team
+      const badgesRes = await userService.getBadges(user.id);
+      setBadges(badgesRes.data || []);
+
+      if (teamId) {
+        const insightsRes = await teamService.getTeamInsights(teamId);
+        setInsights(insightsRes.data);
+      } else {
+        // No team yet — use friendly fallback
+        setInsights({
+          health_score: 0,
+          summary: "لم تنضم إلى فريق بعد. انضم لفريق لرؤية تحليل الأداء.",
+          metrics: { collaboration: 0, progress: 0, morale: 0 }
+        });
+      }
     } catch (err) {
       console.error("Error fetching insights:", err);
-      // Fallback data if backend fails
       setInsights({
         health_score: 82,
         summary: "Your team is performing exceptionally well. Collaboration is high, and the system design phase is near completion. Keep the momentum!",

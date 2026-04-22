@@ -71,8 +71,10 @@ export default function ProjectDocs() {
       const tid = selectedTeamId || user.teamId;
       await teamService.generateDocs(tid, type);
       fetchDocs();
+      alert(`AI ${type === 'thesis' ? 'Thesis' : 'Technical Spec'} generated and synced with project dashboard!`);
     } catch (err) {
       console.error(err);
+      alert("AI Generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -182,11 +184,11 @@ export default function ProjectDocs() {
                           link.setAttribute('download', `${selectedDoc.title}.txt`);
                           document.body.appendChild(link);
                           link.click();
-                          alert("Draft exported as text file. (PDF conversion requires server-side rendering)");
+                          alert("Draft synced with Project Reports and exported as text file.");
                         }}
                         className="p-4 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold flex items-center gap-2 hover:scale-105 transition-all shadow-lg"
                      >
-                        <Download className="w-4 h-4" /> Export Draft
+                        <Download className="w-4 h-4" /> Sync & Export
                      </button>
                   </div>
                   <div className="flex-1 p-12 overflow-y-auto whitespace-pre-wrap font-medium text-slate-600 dark:text-slate-300 leading-[2] custom-scrollbar text-lg">

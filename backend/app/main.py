@@ -93,6 +93,52 @@ async def ai_chat(prompt: schemas.AIPrompt):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ─── Resource Library: AI Syllabus Scraper ────────────────────────────────────
+from pydantic import BaseModel as _PydanticBase
+
+class SyllabusRequest(_PydanticBase):
+    syllabus: str
+
+@app.post("/ai/scrape-syllabus")
+async def scrape_syllabus(request: SyllabusRequest):
+    # Fallback resources when AI key is missing
+    def _fallback(q):
+        q_url = q[:40].replace(" ", "+")
+        return {"resources": [
+            {"title": "YouTube — " + q[:30], "url": "https://www.youtube.com/results?search_query=" + q_url, "type": "Video", "description": "ابحث عن مقاطع يوتيوب ذات صلة بموضوعك."},
+            {"title": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Special:Search?search=" + q_url, "type": "Article", "description": "مقالات موسوعية عن الموضوع."},
+            {"title": "Google Scholar", "url": "https://scholar.google.com/scholar?q=" + q_url, "type": "Document", "description": "أبحاث أكاديمية ودراسات علمية."},
+            {"title": "Coursera Courses", "url": "https://www.coursera.org/search?query=" + q_url, "type": "Course", "description": "دورات تدريبية متخصصة من أفضل الجامعات."},
+            {"title": "GeeksforGeeks", "url": "https://www.geeksforgeeks.org/search/?q=" + q_url, "type": "Website", "description": "شروحات برمجية وتقنية مبسطة."},
+            {"title": "MDN Web Docs", "url": "https://developer.mozilla.org/en-US/search?q=" + q_url, "type": "Documentation", "description": "توثيق رسمي للتقنيات والمعايير."},
+        ]}
+
+    if not genai or not os.getenv("GEMINI_API_KEY"):
+        return _fallback(request.syllabus)
+
+    try:
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        prompt = f"""
+أنت مساعد أكاديمي. المستخدم يريد موارد تعليمية للموضوع التالي:
+{request.syllabus}
+
+أرجع فقط JSON (بدون أي نص إضافي) بالشكل:
+{{
+  "resources": [
+    {{"title": "...", "url": "https://...", "type": "Video|Article|Document|Course|Website", "description": "وصف قصير"}}
+  ]
+}}
+
+أضف 6-8 موارد متنوعة بروابط حقيقية من: YouTube, Coursera, edX, Wikipedia, MDN, GeeksforGeeks, Medium.
+"""
+        response = model.generate_content(prompt)
+        json_str = response.text.strip().replace('```json', '').replace('```', '').strip()
+        return json.loads(json_str)
+    except Exception:
+        return _fallback(request.syllabus)
+
+# ──────────────────────────────────────────────────────────────────────────────
+
 # Auto-seed database on startup (needed for Railway where SQLite resets on redeploy)
 @app.on_event("startup")
 async def startup_seed():
@@ -242,9 +288,12 @@ def update_student_evaluation(user_id: str, data: schemas.UserEvaluationUpdate, 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Update performance in a specific team context (simplified as global score for demo)
-    # In a real app, this might be a 'TeamMember' link table entry
-    user.credits = data.score # Using credits as placeholders for score if needed, or better, update his task scores
+    user.credits = data.score 
+    if data.feedback:
+        user.feedback = data.feedback
+    if data.skills:
+        user.skills = data.skills
+    
     db.commit()
     return {"status": "success"}
 
@@ -600,6 +649,12 @@ def create_message(team_id: str, msg: schemas.MessageBase, db: Session = Depends
 
         db.commit()
         db.refresh(new_msg)
+        
+        # Attach sender info for the response
+        sender = db.query(models.User).filter(models.User.id == new_msg.sender_id).first()
+        new_msg.sender = sender.name if sender else "Member"
+        new_msg.role = sender.role if sender else "student"
+        
         return new_msg
     except Exception as e:
         db.rollback()
@@ -885,10 +940,13 @@ def sync_calendar(team_id: str, db: Session = Depends(get_db)):
         event.add('summary', f"Task: {t.title}")
         event.add('description', t.description)
         try:
-            dt = datetime.strptime(t.deadline, '%Y-%m-%d')
+            # Handle potential different date formats
+            date_str = t.deadline.split('T')[0] if 'T' in str(t.deadline) else str(t.deadline)
+            dt = datetime.strptime(date_str, '%Y-%m-%d')
             event.add('dtstart', dt)
             event.add('dtend', dt + timedelta(hours=1))
-        except:
+        except Exception as e:
+            print(f"Calendar task error: {e}")
             continue
         cal.add_component(event)
         
@@ -897,10 +955,12 @@ def sync_calendar(team_id: str, db: Session = Depends(get_db)):
         event.add('summary', e.title)
         event.add('description', e.description)
         try:
-            dt = datetime.strptime(e.date, '%Y-%m-%d')
+            date_str = e.date.split('T')[0] if 'T' in str(e.date) else str(e.date)
+            dt = datetime.strptime(date_str, '%Y-%m-%d')
             event.add('dtstart', dt)
             event.add('dtend', dt + timedelta(hours=1))
-        except:
+        except Exception as e:
+            print(f"Calendar event error: {e}")
             continue
         cal.add_component(event)
         
@@ -936,8 +996,13 @@ def export_report(team_id: str, db: Session = Depends(get_db)):
     for t in tasks:
         pdf.cell(0, 10, f"- {t.title} ({t.status}): {t.deadline}", ln=True)
         
-    pdf_output = pdf.output(dest='S')
-    return StreamingResponse(io.BytesIO(pdf_output), media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename=report_{team_id}.pdf"})
+    # Using fpdf2: output() without arguments returns bytes
+    pdf_output = pdf.output()
+    return StreamingResponse(
+        io.BytesIO(pdf_output), 
+        media_type="application/pdf", 
+        headers={"Content-Disposition": f"attachment; filename=report_{team_id}.pdf"}
+    )
 
 @app.put("/admin/users/{user_id}/team", response_model=schemas.UserResponse)
 def update_user_team(user_id: str, data: schemas.UserUpdateTeam, db: Session = Depends(get_db)):

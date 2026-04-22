@@ -80,17 +80,19 @@ export default function GlobalVoiceControl() {
   };
 
   return (
-    <div className="fixed bottom-10 right-10 z-[1001]">
+    <div className="fixed bottom-2 right-6 z-[1001] group">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 relative ${
-          isOpen ? 'bg-rose-500 scale-90' : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-110'
+        className={`rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 relative ${
+          isOpen 
+            ? 'w-16 h-16 bg-rose-500' 
+            : 'w-10 h-10 bg-slate-900 dark:bg-white text-white dark:text-slate-900 group-hover:w-16 group-hover:h-16 group-hover:rotate-12'
         }`}
       >
-        {isOpen ? <X className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8" />}
+        {isOpen ? <X className="w-8 h-8 text-white" /> : <Mic className="w-5 h-5 group-hover:w-8 group-hover:h-8 transition-all" />}
         {!isOpen && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 animate-bounce">
-            <Sparkles className="w-3 h-3 text-white" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-500 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 animate-bounce">
+            <Sparkles className="w-2.5 h-2.5 text-white" />
           </span>
         )}
       </button>
@@ -158,7 +160,7 @@ export default function GlobalVoiceControl() {
              {processing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-4 h-4" /> Execute Action</>}
            </button>
            
-           <div className="flex justify-between items-center mt-6">
+          <div className="flex justify-between items-center mt-6">
               <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">UniTrack AI Voice v3.0</p>
               <div className="flex gap-1">
                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>

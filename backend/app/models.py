@@ -22,6 +22,7 @@ class User(Base):
     hashed_password = Column(String) # For simple auth
     bio = Column(String, nullable=True)
     credits = Column(Integer, default=100)
+    feedback = Column(String, nullable=True)
     skills = Column(String, nullable=True) # JSON string of skills
     
     # Relationships
