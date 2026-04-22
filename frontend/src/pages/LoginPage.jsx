@@ -6,8 +6,6 @@ import { BookOpen, GraduationCap, Shield, Users, Eye, EyeOff, Sparkles } from 'l
 const roles = [
   { key: 'student', label: 'Student', icon: GraduationCap, color: 'from-blue-500 to-blue-600', desc: 'Access your projects & tasks' },
   { key: 'professor', label: 'Professor', icon: BookOpen, color: 'from-purple-500 to-purple-600', desc: 'Manage your teams' },
-  { key: 'assistant', label: 'Supervisor', icon: Users, color: 'from-emerald-500 to-emerald-600', desc: 'Monitor team progress' },
-  { key: 'admin', label: 'Admin', icon: Shield, color: 'from-orange-500 to-orange-600', desc: 'Full system control' },
 ];
 
 export default function LoginPage() {

@@ -4,7 +4,6 @@ import { useApp } from './context/AppContext';
 import LoginPage from './pages/LoginPage';
 import StudentLayout from './layouts/StudentLayout';
 import ProfessorLayout from './layouts/ProfessorLayout';
-import AssistantLayout from './layouts/AssistantLayout';
 import AdminLayout from './layouts/AdminLayout';
 
 // Student pages
@@ -27,11 +26,8 @@ import ProfessorAnalytics from './pages/professor/ProfessorAnalytics';
 import ProfessorAI from './pages/professor/ProfessorAI';
 import ProfessorTeams from './pages/professor/ProfessorTeams';
 
-// Assistant pages
-import AssistantDashboard from './pages/assistant/AssistantDashboard';
-import AssistantTeam from './pages/assistant/AssistantTeam';
-import AssistantChat from './pages/assistant/AssistantChat';
-import AssistantAI from './pages/assistant/AssistantAI';
+// Admin pages
+import AdminLogin from './pages/AdminLogin';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -75,6 +71,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/" element={
           user ? <Navigate to={`/${user.role}`} /> : <Navigate to="/login" />
         } />
@@ -116,18 +113,6 @@ export default function App() {
           <Route path="tasks" element={<ProfessorTasks />} />
           <Route path="grades" element={<ProfessorGrades />} />
           <Route path="notifications" element={<ProfessorNotifications />} />
-          <Route path="profile" element={<ProfilePage />} />
-        </Route>
-
-        {/* Assistant Routes */}
-        <Route path="/assistant" element={<ProtectedRoute allowedRole="assistant"><AssistantLayout /></ProtectedRoute>}>
-          <Route index element={<AssistantDashboard />} />
-          <Route path="team/:teamId" element={<AssistantTeam />} />
-          <Route path="chat" element={<AssistantChat />} />
-          <Route path="ai" element={<AssistantAI />} />
-          <Route path="timeline" element={<Timeline />} />
-          <Route path="files" element={<FileManager />} />
-          <Route path="files" element={<FileManager />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 
