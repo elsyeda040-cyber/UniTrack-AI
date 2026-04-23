@@ -794,6 +794,25 @@ def get_admin_stats(db: Session = Depends(get_db)):
         "avg_progress": avg
     }
 
+@app.get("/admin/users", response_model=List[schemas.UserResponse])
+def get_admin_users(db: Session = Depends(get_db)):
+    users = db.query(models.User).all()
+    result = []
+    for u in users:
+        team_id = None
+        if u.role == 'student' and u.teams_as_student:
+            team_id = u.teams_as_student[0].id
+        result.append({
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "role": u.role,
+            "avatar": u.avatar,
+            "bio": u.bio,
+            "teamId": team_id
+        })
+    return result
+
 @app.post("/admin/users", response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     import uuid
