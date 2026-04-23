@@ -112,6 +112,7 @@ export default function App() {
           <Route path="docs" element={<ProjectDocs />} />
           <Route path="tasks" element={<ProfessorTasks />} />
           <Route path="grades" element={<ProfessorGrades />} />
+          <Route path="insights" element={<PerformanceInsights />} />
           <Route path="notifications" element={<ProfessorNotifications />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
@@ -125,6 +126,7 @@ export default function App() {
           <Route path="settings" element={<AdminSettings />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="activity" element={<AdminActivityLog />} />
+          <Route path="insights" element={<PerformanceInsights />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 

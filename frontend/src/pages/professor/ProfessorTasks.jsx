@@ -39,7 +39,7 @@ export default function ProfessorTasks() {
 
   useEffect(() => {
     if (user?.id) fetchTeams();
-  }, [user]);
+  }, [user?.id]);
 
   const fetchTeams = async () => {
     try {

@@ -106,3 +106,12 @@
 .animate-slide-up {
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Compact Layout Enforcement */
+.compact-layout .card { padding: 0.75rem !important; }
+.compact-layout .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem !important; }
+.compact-layout h2 { font-size: 1.1rem !important; }
+.compact-layout p { font-size: 0.8rem !important; }
+.compact-layout .py-6 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+.compact-layout .input { padding: 0.5rem 0.75rem !important; }
+.compact-layout .btn-primary, .compact-layout .btn-secondary { padding: 0.5rem 0.75rem !important; font-size: 0.75rem !important; }

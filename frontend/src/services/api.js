@@ -94,8 +94,12 @@ export const adminService = {
   createTeam: (data) => api.post('/admin/teams', data),
   updateUserTeam: (userId, teamId) => api.put(`/admin/users/${userId}/team`, { team_id: teamId }),
   updateUserPassword: (userId, password) => api.put(`/admin/users/${userId}/password`, { password }),
+  updateUserEmail: (userId, email) => api.put(`/admin/users/${userId}/email`, { email }),
+  updateUserStatus: (userId, status) => api.put(`/admin/users/${userId}/status`, { status }),
   deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
   exportDatabase: () => api.get('/admin/database/export', { responseType: 'blob' }),
+  getSettings: () => api.get('/admin/settings'),
+  updateSettings: (data) => api.post('/admin/settings', data),
 };
 
 export const aiService = {

@@ -190,7 +190,7 @@ export default function StudentNotifications() {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchNotifs = async () => {
     try {

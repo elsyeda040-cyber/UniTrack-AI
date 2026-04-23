@@ -263,7 +263,12 @@ def get_user(user_id: str, db: Session = Depends(get_db)):
 # Task Endpoints
 @app.get("/teams/{team_id}", response_model=schemas.TeamResponse)
 def get_team(team_id: str, db: Session = Depends(get_db)):
-    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+    from sqlalchemy.orm import joinedload
+    team = db.query(models.Team).options(
+        joinedload(models.Team.students),
+        joinedload(models.Team.professor),
+        joinedload(models.Team.assistant)
+    ).filter(models.Team.id == team_id).first()
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
     return team
@@ -487,31 +492,60 @@ def get_user_badges(user_id: str, db: Session = Depends(get_db)):
 
 @app.get("/leaderboard")
 def get_leaderboard(db: Session = Depends(get_db)):
-    # Calculate scores based on completed tasks and average scores
-    users = db.query(models.User).filter(models.User.role == 'student').all()
+    from sqlalchemy import func
+    # Use a more efficient query to get student stats
+    # Joining Users with Tasks and UserBadges to calculate scores in fewer queries
+    from sqlalchemy.orm import joinedload
+    
+    # Get students with their badges and teams
+    students = db.query(models.User).filter(models.User.role == 'student').options(
+        joinedload(models.User.teams_as_student)
+    ).all()
+    
+    # Pre-fetch all completed tasks for these teams to avoid N+1
+    team_ids = set()
+    for s in students:
+        if s.teams_as_student:
+            team_ids.add(s.teams_as_student[0].id)
+    
+    tasks_by_team = {}
+    if team_ids:
+        all_tasks = db.query(models.Task).filter(
+            models.Task.team_id.in_(list(team_ids)),
+            models.Task.status == 'completed'
+        ).all()
+        for t in all_tasks:
+            if t.team_id not in tasks_by_team:
+                tasks_by_team[t.team_id] = []
+            tasks_by_team[t.team_id].append(t)
+            
+    # Pre-fetch badge counts
+    badge_counts = dict(db.query(models.UserBadge.user_id, func.count(models.UserBadge.id)).group_by(models.UserBadge.user_id).all())
+    
     leaderboard = []
-    for u in users:
-        # Completed tasks count
-        comp_tasks = db.query(models.Task).filter(models.Task.team_id == u.teamId if hasattr(u, 'teamId') else None, models.Task.status == 'completed').all()
-        # Average score
+    for u in students:
+        team_id = u.teams_as_student[0].id if u.teams_as_student else None
+        comp_tasks = tasks_by_team.get(team_id, [])
+        
         scores = [t.score for t in comp_tasks if t.score is not None]
         avg_score = sum(scores) / len(scores) if scores else 0
+        badge_count = badge_counts.get(u.id, 0)
         
-        badge_count = db.query(models.UserBadge).filter(models.UserBadge.user_id == u.id).count()
-        
-        # Formula: (Completed Tasks * 50) + (Avg Score * 5) + (Badges * 100)
         final_score = (len(comp_tasks) * 50) + (avg_score * 5) + (badge_count * 100)
         
-        leaderboard.append({
-            "id": u.id,
-            "name": u.name,
-            "role": u.role,
-            "score": int(final_score),
-            "avatar": u.avatar,
-            "badges": badge_count
-        })
+        if final_score > 0: # Only show active students
+            leaderboard.append({
+                "id": u.id,
+                "name": u.name,
+                "role": u.role,
+                "score": int(final_score),
+                "avatar": u.avatar,
+                "badges": badge_count,
+                "teamName": u.teams_as_student[0].name if u.teams_as_student else "Independent"
+            })
+            
     leaderboard.sort(key=lambda x: x['score'], reverse=True)
-    return leaderboard[:10]
+    return leaderboard[:20] # Return top 20 instead of all
 
 # Notification Endpoints
 @app.get("/users/{user_id}/notifications", response_model=List[schemas.NotificationResponse])
@@ -696,13 +730,31 @@ def clear_chat_notifications(user_id: str, db: Session = Depends(get_db)):
     return {"status": "success"}
 
 # Team Endpoints
-@app.get("/teams", response_model=List[schemas.TeamResponse])
+@app.get("/teams", response_model=List[schemas.TeamSummary])
 def get_all_teams(db: Session = Depends(get_db)):
-    return db.query(models.Team).all()
+    # Optimize to only fetch necessary fields and student count
+    from sqlalchemy.orm import load_only
+    teams = db.query(models.Team).options(
+        load_only(models.Team.id, models.Team.name, models.Team.project_title, models.Team.progress, models.Team.color, models.Team.emoji, models.Team.professor_id)
+    ).all()
+    result = []
+    for t in teams:
+        result.append({
+            "id": t.id,
+            "name": t.name,
+            "project_title": t.project_title,
+            "progress": t.progress,
+            "color": t.color,
+            "emoji": t.emoji,
+            "student_count": len(t.students),
+            "professor_id": t.professor_id
+        })
+    return result
 
 @app.get("/professors/{prof_id}/teams", response_model=List[schemas.TeamResponse])
 def get_professor_teams(prof_id: str, db: Session = Depends(get_db)):
-    return db.query(models.Team).filter(models.Team.professor_id == prof_id).all()
+    from sqlalchemy.orm import joinedload
+    return db.query(models.Team).options(joinedload(models.Team.students)).filter(models.Team.professor_id == prof_id).all()
 
 @app.get("/professors/{prof_id}/tasks", response_model=List[schemas.TaskResponse])
 def get_professor_tasks(prof_id: str, db: Session = Depends(get_db)):
@@ -782,33 +834,39 @@ def get_assistant_teams(assistant_id: str, db: Session = Depends(get_db)):
 # Admin Endpoints
 @app.get("/admin/stats", response_model=schemas.AdminStats)
 def get_admin_stats(db: Session = Depends(get_db)):
+    from sqlalchemy import func
     total_users = db.query(models.User).count()
     total_teams = db.query(models.Team).count()
     total_tasks = db.query(models.Task).count()
-    avg_progress = db.query(models.Team.progress).all()
-    avg = sum([p[0] for p in avg_progress]) / len(avg_progress) if avg_progress else 0
+    # Direct SQL average
+    avg = db.query(func.avg(models.Team.progress)).scalar() or 0
     return {
         "total_users": total_users,
         "total_teams": total_teams,
         "total_tasks": total_tasks,
-        "avg_progress": avg
+        "avg_progress": float(avg)
     }
 
-@app.get("/admin/users", response_model=List[schemas.UserResponse])
+@app.get("/admin/users", response_model=List[schemas.UserSummary])
 def get_admin_users(db: Session = Depends(get_db)):
-    users = db.query(models.User).all()
+    from sqlalchemy.orm import joinedload, load_only
+    # Optimization: Use joinedload for teams and load_only for specific user fields
+    # This prevents loading large fields like bio or feedback in the list view
+    users = db.query(models.User).options(
+        load_only(models.User.id, models.User.name, models.User.email, models.User.role, models.User.hashed_password, models.User.status),
+        joinedload(models.User.teams_as_student).load_only(models.Team.id)
+    ).all()
+    
     result = []
     for u in users:
-        team_id = None
-        if u.role == 'student' and u.teams_as_student:
-            team_id = u.teams_as_student[0].id
+        team_id = u.teams_as_student[0].id if u.role == 'student' and u.teams_as_student else None
         result.append({
             "id": u.id,
             "name": u.name,
             "email": u.email,
             "role": u.role,
-            "avatar": u.avatar,
-            "bio": u.bio,
+            "status": u.status or "active",
+            "password": u.hashed_password,
             "teamId": team_id
         })
     return result
@@ -861,6 +919,24 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         "teamId": team_id_res
     }
 
+@app.put("/admin/users/{user_id}/email")
+def update_user_email(user_id: str, payload: dict, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.email = payload.get("email")
+    db.commit()
+    return {"status": "success"}
+
+@app.put("/admin/users/{user_id}/status")
+def toggle_user_status(user_id: str, payload: dict, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.status = payload.get("status")
+    db.commit()
+    return {"status": "success"}
+
 @app.post("/admin/teams", response_model=schemas.TeamResponse)
 def create_team(team: schemas.TeamCreate, db: Session = Depends(get_db)):
     import uuid
@@ -878,23 +954,6 @@ def create_team(team: schemas.TeamCreate, db: Session = Depends(get_db)):
     db.refresh(new_team)
     return new_team
 
-@app.get("/admin/users", response_model=List[schemas.UserResponse])
-def get_all_users(db: Session = Depends(get_db)):
-    users = db.query(models.User).all()
-    result = []
-    for user in users:
-        team_id = user.teams_as_student[0].id if user.role == 'student' and user.teams_as_student else None
-        result.append({
-            "id": user.id,
-            "name": user.name,
-            "email": user.email,
-            "role": user.role,
-            "avatar": user.avatar,
-            "bio": user.bio,
-            "teamId": team_id,
-            "password": user.hashed_password
-        })
-    return result
 
 # Scratchpad Endpoints
 @app.get("/teams/{team_id}/scratchpad", response_model=schemas.ScratchpadResponse)
@@ -1495,3 +1554,19 @@ def process_voice_command(prompt: schemas.AIPrompt, db: Session = Depends(get_db
         return {"status": "recognized", "action": action_data['action'], "params": action_data['params'], "msg": f"تم التعرف على الأمر: {action_data['action']}"}
     except:
         return {"status": "error", "msg": "لم أتمكن من فهم الأمر الصوتي، يرجى المحاولة مرة أخرى."}
+
+@app.get("/admin/settings")
+def get_system_settings(db: Session = Depends(get_db)):
+    settings = db.query(models.SystemSetting).all()
+    return {s.key: s.value for s in settings}
+
+@app.post("/admin/settings")
+def update_system_settings(settings: dict, db: Session = Depends(get_db)):
+    for key, value in settings.items():
+        setting = db.query(models.SystemSetting).filter(models.SystemSetting.key == key).first()
+        if setting:
+            setting.value = str(value)
+        else:
+            db.add(models.SystemSetting(key=key, value=str(value)))
+    db.commit()
+    return {"status": "success"}

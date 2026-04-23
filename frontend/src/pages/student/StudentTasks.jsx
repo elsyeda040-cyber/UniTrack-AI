@@ -62,7 +62,7 @@ export default function StudentTasks() {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchTasks = async () => {
     try {

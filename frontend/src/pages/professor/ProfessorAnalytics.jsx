@@ -17,7 +17,7 @@ export default function ProfessorAnalytics() {
     if (user?.id) {
       fetchData();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchData = async () => {
     try {

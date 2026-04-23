@@ -33,10 +33,12 @@ const PerformanceInsights = () => {
         const insightsRes = await teamService.getTeamInsights(teamId);
         setInsights(insightsRes.data);
       } else {
-        // No team yet — use friendly fallback
+        // Handle non-student or team-less user
         setInsights({
           health_score: 0,
-          summary: "لم تنضم إلى فريق بعد. انضم لفريق لرؤية تحليل الأداء.",
+          summary: user.role === 'student' 
+            ? "لم تنضم إلى فريق بعد. انضم لفريق لرؤية تحليل الأداء." 
+            : "هذه الصفحة مخصصة لتحليل أداء الفرق. يرجى اختيار فريق من لوحة التحكم الرئيسية لرؤية التفاصيل.",
           metrics: { collaboration: 0, progress: 0, morale: 0 }
         });
       }

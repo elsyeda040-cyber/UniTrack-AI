@@ -51,7 +51,7 @@ const GradeProgressBar = ({ score }) => {
           style={{ width: `${s}%` }} 
         />
       </div>
-      <span className="text-xs font-bold text-slate-500 min-w-[24px]">{s}%</span>
+      <span className="text-sm font-black text-slate-700 dark:text-slate-200 min-w-[35px]">{s}%</span>
     </div>
   );
 };
@@ -88,11 +88,10 @@ export default function ProfessorGrades() {
         const currentTeam = selectedTeam || teamsData[0];
         if (!selectedTeam) setSelectedTeam(currentTeam);
 
-        // 2. Get All Teams to find specific details (members/scores)
-        const allRes = await teamService.getAll();
-        const foundTeam = (allRes.data || []).find(t => t.id === currentTeam.id);
+        // Optimization: Use the data we already have in teamsData instead of a separate getAll() call
+        const foundTeam = teamsData.find(t => t.id === currentTeam.id);
 
-        if (foundTeam?.students) {
+        if (foundTeam?.students && foundTeam.students.length > 0) {
           setStudents(foundTeam.students);
           
           // Sync grades map
@@ -121,7 +120,7 @@ export default function ProfessorGrades() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [user?.id, selectedTeam?.id]); // Now updates when team selection changes
 
   // Actions
   const handleSave = async (studentId) => {
@@ -217,26 +216,43 @@ export default function ProfessorGrades() {
         <StatCard id="low" label="أقل درجة" value={minScore} icon={AlertTriangle} color="bg-rose-500" isActive={filter === 'low'} onClick={() => setFilter('low')} />
       </div>
 
-      {/* Distribution Chart (Simple Implementation) */}
-      <div className="card p-6 bg-white dark:bg-slate-800">
-        <h3 className="font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-          <BarChart2 className="w-4 h-4 text-primary-500" /> توزيع الدرجات التقديري
+      {/* Distribution Chart (Enhanced Visibility) */}
+      <div className="card p-6 bg-white dark:bg-slate-800 shadow-xl border-slate-100">
+        <h3 className="font-black text-slate-800 dark:text-white mb-8 flex items-center gap-2 text-lg">
+          <BarChart2 className="w-5 h-5 text-primary-500" /> توزيع الدرجات التقديري
         </h3>
-        <div className="flex items-end gap-3 h-32 px-2">
+        <div className="flex items-end gap-3 h-40 px-4">
           {GRADE_THRESHOLDS.slice().reverse().map((tier, idx) => {
             const count = scoresArray.filter(s => {
               const nextTier = GRADE_THRESHOLDS.slice().reverse()[idx + 1];
               return nextTier ? (s >= tier.min && s < nextTier.min) : (s >= tier.min);
             }).length;
             const percentage = students.length > 0 ? (count / students.length) * 100 : 0;
+            
+            // Map colors explicitly to avoid Tailwind JIT issues
+            const barColors = {
+              'امتياز': 'bg-emerald-500',
+              'جيد جداً': 'bg-blue-500',
+              'جيد': 'bg-purple-500',
+              'مقبول': 'bg-amber-500',
+              'راسب': 'bg-rose-500'
+            };
+
             return (
-              <div key={tier.label} className="flex-1 flex flex-col items-center gap-2 group relative">
-                <div className="absolute -top-6 text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">{count} طالب</div>
+              <div key={tier.label} className="flex-1 flex flex-col items-center gap-3 group relative">
+                {/* Count Tag */}
+                <div className={`mb-1 text-xs font-black px-2 py-0.5 rounded-md ${tier.bg} ${tier.color} border ${tier.border} shadow-sm`}>
+                  {count}
+                </div>
+                
+                {/* Bar */}
                 <div 
-                  className={`w-full rounded-t-lg transition-all duration-700 ${tier.color.replace('text', 'bg')}`} 
-                  style={{ height: `${Math.max(percentage, 5)}%` }}
+                  className={`w-full rounded-t-xl transition-all duration-1000 shadow-lg ${barColors[tier.label] || 'bg-slate-400'}`} 
+                  style={{ height: `${Math.max(percentage, 8)}%` }}
                 />
-                <span className={`text-[10px] font-bold ${tier.color}`}>{tier.label}</span>
+                
+                {/* Label */}
+                <span className={`text-[11px] font-black ${tier.color} whitespace-nowrap`}>{tier.label}</span>
               </div>
             );
           })}

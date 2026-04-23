@@ -89,14 +89,26 @@ export default function AdminSettings() {
   });
 
   useEffect(() => {
-    adminService.getUsers()
-      .then(res => {
-        setUsers(res.data);
+    Promise.all([
+      adminService.getUsers(),
+      adminService.getSettings()
+    ])
+      .then(([uRes, sRes]) => {
+        setUsers(uRes.data);
         const perms = {};
-        res.data.forEach(u => {
+        uRes.data.forEach(u => {
           perms[u.id] = u.role === 'admin' ? 'admin' : u.role === 'professor' ? 'full' : 'read';
         });
         setUserPermissions(perms);
+        
+        // Map backend strings back to booleans
+        if (Object.keys(sRes.data).length > 0) {
+          const mapped = {};
+          Object.entries(sRes.data).forEach(([k, v]) => {
+            mapped[k] = v === 'True' || v === 'true';
+          });
+          setSettings(prev => ({ ...prev, ...mapped }));
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -106,10 +118,15 @@ export default function AdminSettings() {
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 900));
-    setSaving(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    try {
+      await adminService.updateSettings(settings);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      alert("فشل حفظ الإعدادات.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleExportData = async () => {

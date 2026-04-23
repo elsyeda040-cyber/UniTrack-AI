@@ -41,7 +41,7 @@ export default function StudentDashboard() {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchDashboardData = async () => {
     try {

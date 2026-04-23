@@ -17,7 +17,8 @@ class User(Base):
     id = Column(String, primary_key=True, index=True)
     name = Column(String)
     email = Column(String, unique=True, index=True)
-    role = Column(String) # student, professor, assistant, admin
+    role = Column(String, index=True) # student, professor, assistant, admin
+    status = Column(String, default="active") # active, suspended
     avatar = Column(String, nullable=True)
     hashed_password = Column(String) # For simple auth
     bio = Column(String, nullable=True)
@@ -40,8 +41,8 @@ class Team(Base):
     color = Column(String)
     emoji = Column(String)
     
-    professor_id = Column(String, ForeignKey('users.id'))
-    assistant_id = Column(String, ForeignKey('users.id'))
+    professor_id = Column(String, ForeignKey('users.id'), index=True)
+    assistant_id = Column(String, ForeignKey('users.id'), index=True)
     
     # Relationships
     professor = relationship("User", back_populates="teams_as_professor", foreign_keys=[professor_id])
@@ -53,11 +54,11 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(String, primary_key=True, index=True)
-    team_id = Column(String, ForeignKey('teams.id'))
+    team_id = Column(String, ForeignKey('teams.id'), index=True)
     title = Column(String)
     description = Column(String)
     deadline = Column(String)
-    status = Column(String) # todo, in_progress, completed
+    status = Column(String, index=True) # todo, in_progress, completed
     files_required = Column(Boolean, default=False)
     score = Column(Integer, nullable=True)
     feedback = Column(String, nullable=True)
@@ -70,9 +71,9 @@ class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    team_id = Column(String, ForeignKey('teams.id'))
-    sender_id = Column(String, ForeignKey('users.id'))
-    recipient_id = Column(String, ForeignKey('users.id'), nullable=True) # New column for private 1-on-1 chat
+    team_id = Column(String, ForeignKey('teams.id'), index=True)
+    sender_id = Column(String, ForeignKey('users.id'), index=True)
+    recipient_id = Column(String, ForeignKey('users.id'), nullable=True, index=True) # New column for private 1-on-1 chat
     text = Column(String, nullable=True)
     type = Column(String, default="text") # text, voice, image, file
     url = Column(String, nullable=True)
@@ -86,20 +87,20 @@ class Event(Base):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True, index=True)
-    team_id = Column(String, ForeignKey('teams.id'))
+    team_id = Column(String, ForeignKey('teams.id'), index=True)
     title = Column(String)
     description = Column(String, nullable=True)
     date = Column(String) # ISO date string
-    type = Column(String, default="milestone") # milestone, meeting, deadline
+    type = Column(String, default="milestone", index=True) # milestone, meeting, deadline
     color = Column(String, default="#3b82f6")
 
 class Review(Base):
     __tablename__ = "reviews"
 
     id = Column(Integer, primary_key=True, index=True)
-    team_id = Column(String, ForeignKey('teams.id'))
-    reviewer_id = Column(String, ForeignKey('users.id'))
-    reviewee_id = Column(String, ForeignKey('users.id'))
+    team_id = Column(String, ForeignKey('teams.id'), index=True)
+    reviewer_id = Column(String, ForeignKey('users.id'), index=True)
+    reviewee_id = Column(String, ForeignKey('users.id'), index=True)
     rating = Column(Integer) # 1-5
     comment = Column(String, nullable=True)
     date = Column(DateTime, default=datetime.utcnow)
@@ -123,12 +124,12 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey('users.id'))
+    user_id = Column(String, ForeignKey('users.id'), index=True)
     type = Column(String)
     title = Column(String)
     message = Column(String)
     time = Column(String) # e.g., "5 min ago" or ISO string
-    read = Column(Boolean, default=False)
+    read = Column(Boolean, default=False, index=True)
 
 class Scratchpad(Base):
     __tablename__ = "scratchpads"
@@ -192,3 +193,8 @@ class PresentationReview(Base):
     review_json = Column(String) # Detailed AI feedback JSON
     score = Column(Integer)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class SystemSetting(Base):
+    __tablename__ = "system_settings"
+    key = Column(String, primary_key=True, index=True)
+    value = Column(String) # JSON or plain text

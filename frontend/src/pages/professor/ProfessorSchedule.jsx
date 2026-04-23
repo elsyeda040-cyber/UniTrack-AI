@@ -77,7 +77,7 @@ export default function ProfessorSchedule() {
       };
       loadData();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();

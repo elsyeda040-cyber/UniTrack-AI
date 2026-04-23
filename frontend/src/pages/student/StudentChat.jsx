@@ -255,11 +255,9 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
       alert("Error: No active team selected.");
       return;
     }
-    console.log(`[AI] Requesting summary for team: ${activeTeamId}`);
     setIsSummarizing(true);
     try {
       const res = await teamService.getChatSummary(activeTeamId);
-      console.log("[AI] Summary received:", res.data.summary);
       setSummary(res.data.summary);
       setShowSummary(true);
     } catch (err) {
@@ -411,32 +409,38 @@ export default function StudentChat({ teamId: propTeamId, teamName: propTeamName
                 } ${msg.type === 'image' ? 'p-1' : ''}`}>
                   
                   {/* Edit/Delete Menu Button */}
-                  {isOwn && !editingMsgId && (
-                    <div className="absolute top-1/2 -left-8 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {((isOwn && msg.type === 'text') || user.role === 'professor' || user.role === 'admin' || isOwn) && !editingMsgId && (
+                    <div className={`absolute top-1/2 -left-8 -translate-y-1/2 transition-opacity ${activeMenuId === msg.id ? 'opacity-100' : 'opacity-100 md:opacity-0 group-hover:opacity-100'}`}>
                       <div className="relative">
                         <button 
-                          onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === msg.id ? null : msg.id); }}
-                          className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveMenuId(activeMenuId === msg.id ? null : msg.id); }}
+                          className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 bg-white/50 dark:bg-slate-800/50 shadow-sm md:bg-transparent md:shadow-none"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         
                         {activeMenuId === msg.id && (
-                          <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl py-1 z-20 min-w-[110px] animate-fade-in" onClick={e => e.stopPropagation()}>
-                            <button 
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingMsgId(msg.id); setEditValue(msg.text || ""); setActiveMenuId(null); }}
-                              className="w-full text-right flex items-center justify-end gap-2 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                            >
-                              تعديل <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button 
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(msg.id); setActiveMenuId(null); }}
-                              className="w-full text-right flex items-center justify-end gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                            >
-                              حذف <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                          <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl py-1 z-50 min-w-[120px] animate-fade-in" onClick={e => e.stopPropagation()}>
+                            {isOwn && msg.type === 'text' && (
+                              <button 
+                                type="button"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingMsgId(msg.id); setEditValue(msg.text || ""); setActiveMenuId(null); }}
+                                className="w-full text-right flex items-center justify-between px-4 py-2.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-semibold"
+                              >
+                                <span>تعديل</span> <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {(isOwn || user.role === 'professor' || user.role === 'admin') && (
+                              <button 
+                                type="button"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(msg.id); setActiveMenuId(null); }}
+                                className="w-full text-right flex items-center justify-between px-4 py-2.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-semibold"
+                              >
+                                <span>حذف</span> <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>

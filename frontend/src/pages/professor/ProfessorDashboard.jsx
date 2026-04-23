@@ -18,7 +18,7 @@ export default function ProfessorDashboard() {
     if (user?.id) {
       fetchData();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchData = async () => {
     try {

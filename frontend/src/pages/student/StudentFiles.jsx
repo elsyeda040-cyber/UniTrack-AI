@@ -126,7 +126,7 @@ export default function StudentFiles() {
   useEffect(() => {
     if (user?.teamId) fetchFiles();
     else setLoading(false);
-  }, [user]);
+  }, [user?.id]);
 
   const fetchFiles = async () => {
     try {

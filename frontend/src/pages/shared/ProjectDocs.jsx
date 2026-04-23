@@ -35,7 +35,7 @@ export default function ProjectDocs() {
       }
     };
     init();
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (selectedTeamId) {

@@ -23,11 +23,10 @@ export default function PeerReview({ teamId: propTeamId }) {
 
   const fetchData = async () => {
     try {
-      // 1. Get all teams to find members of THIS team
-      // (Improvement: backend could have GET /teams/{id}/members)
-      const teamsRes = await teamService.getAll();
-      const myTeam = teamsRes.data.find(t => t.id === activeTeamId);
-      if (myTeam) {
+      // 1. Get the specific team to find members of THIS team
+      const teamRes = await teamService.getTeam(activeTeamId);
+      const myTeam = teamRes.data;
+      if (myTeam && myTeam.students) {
         setTeamMembers(myTeam.students.filter(s => s.id !== user.id));
       }
 

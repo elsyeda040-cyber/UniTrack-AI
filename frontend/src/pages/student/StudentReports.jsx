@@ -16,7 +16,7 @@ export default function StudentReports() {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchTasks = async () => {
     try {

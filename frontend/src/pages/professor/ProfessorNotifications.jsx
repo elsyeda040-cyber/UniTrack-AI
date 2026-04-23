@@ -72,7 +72,7 @@ export default function ProfessorNotifications() {
       };
       fetchNotifs();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

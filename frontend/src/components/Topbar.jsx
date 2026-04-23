@@ -34,7 +34,7 @@ export default function Topbar({ title }) {
             className="pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 w-48 dark:text-white dark:placeholder-slate-400"
             onChange={(e) => {
               if (e.target.value.length > 2) {
-                console.log("Searching for:", e.target.value);
+                // Search logic here
               }
             }}
             onKeyDown={(e) => e.key === 'Enter' && alert('No results found for "' + e.target.value + '"')}

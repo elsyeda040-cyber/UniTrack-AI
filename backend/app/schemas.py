@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel, Field, model_validator
+from typing import List, Optional, Any
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -12,6 +12,17 @@ class UserBase(BaseModel):
     credits: int = 100
     feedback: Optional[str] = None
     skills: Optional[str] = None
+    
+class UserSummary(BaseModel):
+    id: str
+    name: str
+    email: str
+    role: str
+    status: str = "active"
+    password: Optional[str] = None
+    teamId: Optional[str] = None
+    class Config:
+        from_attributes = True
 
 class UserCreate(UserBase):
     password: str
@@ -20,8 +31,20 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     teamId: Optional[str] = None
     password: Optional[str] = None
+    score: Optional[int] = None
+    tasksCompleted: Optional[int] = 0
+    tasksTotal: Optional[int] = 0
     class Config:
         from_attributes = True
+
+    @model_validator(mode='before')
+    @classmethod
+    def populate_team_id(cls, values: Any) -> Any:
+        # When coming from ORM, populate teamId from teams_as_student relationship
+        if hasattr(values, 'teams_as_student') and values.teams_as_student:
+            if not getattr(values, 'teamId', None):
+                object.__setattr__(values, 'teamId', values.teams_as_student[0].id)
+        return values
 
 class UserUpdatePassword(BaseModel):
     password: str
@@ -60,6 +83,18 @@ class TeamCreate(BaseModel):
     project_title: str
     color: str = "#3b82f6"
     emoji: str = "🚀"
+
+class TeamSummary(BaseModel):
+    id: str
+    name: str
+    project_title: str
+    progress: int
+    color: str
+    emoji: str
+    student_count: Optional[int] = 0
+    professor_id: Optional[str] = None
+    class Config:
+        from_attributes = True
 
 class TaskCreate(BaseModel):
     title: str
@@ -279,3 +314,9 @@ class RiskSimulationRequest(BaseModel):
 class SkillMatrixResponse(BaseModel):
     team_id: str
     matrix: List[dict]
+
+class SystemSettingSchema(BaseModel):
+    key: str
+    value: str
+    class Config:
+        from_attributes = True

@@ -19,7 +19,7 @@ export default function StudentProgress() {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchProgress = async () => {
     try {

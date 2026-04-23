@@ -13,7 +13,7 @@ export default function AssistantDashboard() {
     if (user?.id) {
       fetchData();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchData = async () => {
     try {

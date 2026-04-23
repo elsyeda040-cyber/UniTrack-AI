@@ -15,8 +15,10 @@ export default function AdminUsers() {
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
   const [isEditPasswordModalOpen, setIsEditPasswordModalOpen] = useState(false);
+  const [isEditEmailModalOpen, setIsEditEmailModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [newPassword, setNewPassword] = useState('');
+  const [newEmail, setNewEmail] = useState('');
   const [showPasswordMap, setShowPasswordMap] = useState({});
   const [newTeamId, setNewTeamId] = useState('');
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'student', teamId: '', createNewTeam: false, newTeamName: '', newTeamProjectTitle: '', bio: '' });
@@ -157,6 +159,28 @@ export default function AdminUsers() {
     }
   };
 
+  const handleUpdateEmail = async (e) => {
+    e.preventDefault();
+    try {
+      await adminService.updateUserEmail(editingUser.id, newEmail);
+      setUsers(users.map(u => u.id === editingUser.id ? { ...u, email: newEmail } : u));
+      setIsEditEmailModalOpen(false);
+      alert("تم تحديث البريد الإلكتروني بنجاح!");
+    } catch (err) {
+      alert("فشل تحديث البريد الإلكتروني.");
+    }
+  };
+
+  const handleToggleStatus = async (user) => {
+    const nextStatus = user.status === 'active' ? 'suspended' : 'active';
+    try {
+      await adminService.updateUserStatus(user.id, nextStatus);
+      setUsers(users.map(u => u.id === user.id ? { ...u, status: nextStatus } : u));
+    } catch (err) {
+      alert("فشل تغيير حالة الحساب.");
+    }
+  };
+
   const togglePasswordVisibility = (userId) => {
     setShowPasswordMap(prev => ({ ...prev, [userId]: !prev[userId] }));
   };
@@ -167,7 +191,15 @@ export default function AdminUsers() {
   );
 
   const professors = filteredUsers.filter(u => u.role === 'professor');
-  const students = filteredUsers.filter(u => u.role === 'student');
+  const students = filteredUsers.filter(u => u.role === 'student').slice(0, 3000); // Increased limit to cover all 2500+ students
+  const displayTeams = teams.filter(t => {
+      const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase()) || 
+                           t.project_title.toLowerCase().includes(search.toLowerCase());
+      if (filter === 'atRisk') return matchesSearch && t.progress < 30;
+      if (filter === 'completed') return matchesSearch && t.progress === 100;
+      if (filter === 'inProgress') return matchesSearch && t.progress > 0 && t.progress < 100;
+      return matchesSearch;
+    }).slice(0, 500); // Limit to 500
 
   if (loading) return (
     <div className="h-64 flex items-center justify-center">
@@ -242,7 +274,14 @@ export default function AdminUsers() {
                     <td className="py-3 font-bold text-amber-500">4.8 ⭐</td>
                     <td className="py-3">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => { setEditingUser(p); setNewTeamId(p.teamId || ''); setIsEditTeamModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">Move</button>
+                        <button 
+                          onClick={() => handleToggleStatus(p)} 
+                          className={`p-1.5 rounded-lg text-xs font-bold transition-colors ${p.status === 'suspended' ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
+                        >
+                          {p.status === 'suspended' ? 'تحميل' : 'نشط'}
+                        </button>
+                        <button onClick={() => { setEditingUser(p); setNewEmail(p.email); setIsEditEmailModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">تعديل</button>
+                        <button onClick={() => { setEditingUser(p); setNewTeamId(p.teamId || ''); setIsEditTeamModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">نقل</button>
                         <button onClick={() => handleDeleteUser(p.id)} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
@@ -273,7 +312,15 @@ export default function AdminUsers() {
                       {s.name}
                     </td>
                     <td className="py-3 text-slate-500">{s.email}</td>
-                    <td className="py-3 text-slate-400 text-xs">{s.teamId || 'No Team'}</td>
+                    <td className="py-3 text-slate-400 text-xs">
+                      {s.teamId ? (
+                        <div>
+                          <span className="font-bold text-slate-600 dark:text-slate-300">{teams.find(t => t.id === s.teamId)?.name || 'Unknown Team'}</span>
+                          <br />
+                          <span className="text-[10px] opacity-70">{s.teamId}</span>
+                        </div>
+                      ) : 'No Team'}
+                    </td>
                     <td className="py-3 text-slate-500 font-mono text-xs">
                       <div className="flex items-center gap-2">
                         <span>{showPasswordMap[s.id] ? s.password : '••••••••'}</span>
@@ -288,7 +335,14 @@ export default function AdminUsers() {
                     <td className="py-3 text-slate-400 truncate max-w-[150px]">{s.bio}</td>
                     <td className="py-3">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => { setEditingUser(s); setNewTeamId(s.teamId || ''); setIsEditTeamModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">Change Team</button>
+                        <button 
+                          onClick={() => handleToggleStatus(s)} 
+                          className={`p-1.5 rounded-lg text-xs font-bold transition-colors ${s.status === 'suspended' ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
+                        >
+                          {s.status === 'suspended' ? 'معلق' : 'نشط'}
+                        </button>
+                        <button onClick={() => { setEditingUser(s); setNewEmail(s.email); setIsEditEmailModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">تعديل</button>
+                        <button onClick={() => { setEditingUser(s); setNewTeamId(s.teamId || ''); setIsEditTeamModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-xs font-semibold">تغيير الفريق</button>
                         <button onClick={() => handleDeleteUser(s.id)} className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
@@ -302,16 +356,7 @@ export default function AdminUsers() {
 
       {tab === 'teams' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {teams
-            .filter(t => {
-              const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase()) || 
-                                   t.project_title.toLowerCase().includes(search.toLowerCase());
-              if (filter === 'atRisk') return matchesSearch && t.progress < 30;
-              if (filter === 'completed') return matchesSearch && t.progress === 100;
-              if (filter === 'inProgress') return matchesSearch && t.progress > 0 && t.progress < 100;
-              return matchesSearch;
-            })
-            .map(team => (
+          {displayTeams.map(team => (
             <div key={team.id} className="card">
               <div className="flex items-center gap-3 mb-3">
                 <div className="text-2xl">{team.emoji}</div>
@@ -575,6 +620,35 @@ export default function AdminUsers() {
               <div className="flex justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setIsEditPasswordModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">Cancel</button>
                 <button type="submit" className="btn-primary px-6">Update Password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Edit Email Modal */}
+      {isEditEmailModalOpen && editingUser && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">تعديل البريد الإلكتروني</h3>
+              <button onClick={() => setIsEditEmailModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateEmail} className="p-6 space-y-4">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-4">
+                <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">المستخدم: {editingUser.name}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">البريد الجديد</label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input required type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="input w-full pl-9" placeholder="Enter new email" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsEditEmailModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">إلغاء</button>
+                <button type="submit" className="btn-primary px-6">حفظ</button>
               </div>
             </form>
           </div>

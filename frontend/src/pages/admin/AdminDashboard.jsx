@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminService, teamService } from '../../services/api';
 import { 
   Shield, Loader2, Star, CheckCircle, Clock, Users, TrendingUp, 
-  BarChart2, AlertCircle, Bell, X, ChevronRight, UserPlus, UserMinus, Settings,
+  BarChart2, AlertCircle, Bell, X, ChevronRight, UserPlus, Settings,
   Download, Activity, Trophy, Database, Server
 } from 'lucide-react';
 
@@ -70,6 +70,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedProfessor, setSelectedProfessor] = useState(null);
   const [expandedTeamId, setExpandedTeamId] = useState(null);
+  const [expandedTeamStudents, setExpandedTeamStudents] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
   const [bannerNotifs, setBannerNotifs] = useState([]);
   const navigate = useNavigate();
 
@@ -128,6 +130,28 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
+  // ── Fetch real students for a team on-demand ──
+  const handleExpandTeam = async (teamId, isCurrentlyExpanded) => {
+    if (isCurrentlyExpanded) {
+      setExpandedTeamId(null);
+      setExpandedTeamStudents([]);
+      return;
+    }
+    setExpandedTeamId(teamId);
+    setExpandedTeamStudents([]);
+    setLoadingStudents(true);
+    try {
+      const res = await teamService.getTeam(teamId);
+      const teamData = res.data;
+      setExpandedTeamStudents(teamData.students || []);
+    } catch (err) {
+      console.error('Failed to fetch team students:', err);
+      setExpandedTeamStudents([]);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
   if (loading) return (
     <div className="h-64 flex items-center justify-center">
       <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
@@ -144,9 +168,9 @@ export default function AdminDashboard() {
   const teamsAtRisk = teams.filter(t => t.progress < 30).length;
 
   const colorByIdx = ['from-blue-500 to-indigo-600', 'from-slate-700 to-slate-900', 'from-orange-400 to-orange-500'];
-  const displayedTeams = selectedProfessor
+  const displayedTeams = (selectedProfessor
     ? teams.filter(t => t.professor_id === selectedProfessor.id)
-    : teams;
+    : teams).slice(0, 20); // Limit to 20 for dashboard performance
 
   const dismissNotif = (id) => setBannerNotifs(prev => prev.filter(n => n.id !== id));
 
@@ -440,18 +464,14 @@ export default function AdminDashboard() {
               : team.progress >= 30 ? '🟡 بطيء'
               : '🔴 يحتاج دعم';
 
-            let teamStudents = users.filter(u => u.role === 'student' && String(u.teamId) === String(team.id));
-            if (teamStudents.length === 0) {
-              teamStudents = [
-                { id: `mock1-${team.id}`, name: 'أحمد محمود', email: 'ahmed@student.edu', rating: 4.8 },
-                { id: `mock2-${team.id}`, name: 'سارة خالد', email: 'sara@student.edu', rating: 4.5 }
-              ];
-            }
+            // Students are fetched on-demand when team is expanded (see handleExpandTeam)
+
+            const studentCount = team.student_count || 0;
 
             return (
               <div key={team.id} className="rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden hover:shadow-sm transition-all">
                 <div
-                  onClick={() => setExpandedTeamId(isExpanded ? null : team.id)}
+                  onClick={() => handleExpandTeam(team.id, isExpanded)}
                   className="flex flex-col md:flex-row md:items-center gap-4 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-[220px]">
@@ -484,6 +504,9 @@ export default function AdminDashboard() {
                     <span className={`px-3 py-1.5 rounded-full text-xs font-bold border ${statusColor}`}>
                       {statusText}
                     </span>
+                    <span className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-lg font-bold">
+                      👥 {studentCount} طالب
+                    </span>
                     <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                   </div>
                 </div>
@@ -491,25 +514,39 @@ export default function AdminDashboard() {
                 {isExpanded && (
                   <div className="p-5 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-700 animate-fade-in">
                     <h4 className="font-bold text-sm text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-                      <Users className="w-4 h-4" /> أعضاء الفريق
+                      <Users className="w-4 h-4" /> أعضاء الفريق ({studentCount} طالب)
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {teamStudents.map(student => (
-                        <div key={student.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                          <div className="flex items-center gap-2">
-                            <img src={`https://ui-avatars.com/api/?name=${student.name}&background=random`} alt={student.name} className="w-9 h-9 rounded-full border border-slate-100" />
-                            <div>
-                              <p className="text-sm font-bold text-slate-800 dark:text-white">{student.name}</p>
-                              <p className="text-xs text-slate-400">{student.email}</p>
+                    {loadingStudents ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                      </div>
+                    ) : expandedTeamStudents.length === 0 ? (
+                      <p className="text-sm text-slate-400 text-center py-6">لا يوجد طلاب مسجلين في هذا الفريق حالياً.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-72 overflow-y-auto scrollbar-none">
+                        {expandedTeamStudents.map(student => (
+                          <div key={student.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                {student.name.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-slate-800 dark:text-white">{student.name}</p>
+                                <p className="text-xs text-slate-400">{student.email}</p>
+                              </div>
                             </div>
+                            {student.score !== undefined && student.score !== null ? (
+                              <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md">
+                                <span className="text-xs font-bold text-amber-600">{student.score}</span>
+                                <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">طالب</span>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md">
-                            <span className="text-xs font-bold text-amber-600">{student.rating || '4.5'}</span>
-                            <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                     <div className="mt-4 flex flex-col lg:flex-row gap-3">
                       <div className="flex-1 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
                         <div>

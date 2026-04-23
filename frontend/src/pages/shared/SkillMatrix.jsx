@@ -35,7 +35,7 @@ export default function SkillMatrix() {
       }
     };
     init();
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (selectedTeamId) {
