@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { teamService } from '../services/api';
-import { Send, Loader2, User, Paperclip, Mic, Trash2, Play, FileText, Download } from 'lucide-react';
+import { Send, Loader2, User, Paperclip, Mic, Trash2, Play, FileText, Download, MoreVertical, Edit2, CheckCircle2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 const roleColor = { professor: 'from-purple-500 to-purple-600', assistant: 'from-emerald-500 to-emerald-600', student: 'from-blue-500 to-blue-600' };
@@ -23,6 +23,17 @@ export default function PrivateStudentChat({ teamId, student }) {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const recordingTimeRef = useRef(0);
+
+  // Message Edit/Delete States
+  const [editingMsgId, setEditingMsgId] = useState(null);
+  const [editValue, setEditValue] = useState("");
+  const [activeMenuId, setActiveMenuId] = useState(null);
+
+  useEffect(() => {
+    const handleClickAway = () => setActiveMenuId(null);
+    window.addEventListener('click', handleClickAway);
+    return () => window.removeEventListener('click', handleClickAway);
+  }, []);
 
   useEffect(() => {
     fetchMessages();
@@ -60,6 +71,46 @@ export default function PrivateStudentChat({ teamId, student }) {
       console.error(err);
     } finally {
       if (!isBackground) setLoading(false);
+    }
+  };
+
+  const handleUpdate = async (msgId) => {
+    if (!editValue.trim() || !user) return;
+    try {
+      const updatedMessages = messages.map(m => 
+        m.id === msgId ? { ...m, text: editValue } : m
+      );
+      setMessages(updatedMessages);
+      setEditingMsgId(null);
+
+      await teamService.updateMessage(teamId, msgId, { 
+        sender_id: user.id || '', 
+        text: editValue,
+        team_id: teamId,
+        type: 'text'
+      });
+      fetchMessages(true);
+    } catch (err) {
+      console.error("Failed to update message", err);
+      alert("فشل تحديث الرسالة. يرجى المحاولة مرة أخرى.");
+      fetchMessages(true);
+    }
+  };
+
+  const handleDelete = async (msgId) => {
+    if (!window.confirm("هل أنت متأكد من حذف هذه الرسالة؟") || !user) return;
+    try {
+      const isOptimistic = typeof msgId === 'number' && msgId > 1000000000000;
+      setMessages(prev => prev.filter(m => m.id !== msgId));
+      
+      if (!isOptimistic) {
+        await teamService.deleteMessage(teamId, msgId, user.id);
+      }
+      fetchMessages(true);
+    } catch (err) {
+      console.error("Failed to delete message", err);
+      alert("فشل حذف الرسالة. يرجى المحاولة مرة أخرى.");
+      fetchMessages(true);
     }
   };
 
@@ -273,7 +324,60 @@ export default function PrivateStudentChat({ teamId, student }) {
                       : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-slate-700/50 rounded-tl-sm'
                     } ${msg.type === 'image' ? 'p-1' : ''}`}
                   >
-                    {msg.type === 'voice' ? (
+                  {/* Edit/Delete Menu Button */}
+                  {((isMe && msg.type === 'text') || user.role === 'professor' || user.role === 'admin' || isMe) && !editingMsgId && (
+                    <div className={`absolute top-1/2 ${isMe ? '-left-8' : '-right-8'} -translate-y-1/2 transition-opacity ${activeMenuId === msg.id ? 'opacity-100' : 'opacity-100 md:opacity-0 group-hover:opacity-100'}`}>
+                      <div className="relative">
+                        <button 
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveMenuId(activeMenuId === msg.id ? null : msg.id); }}
+                          className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 bg-white/50 dark:bg-slate-800/50 shadow-sm md:bg-transparent md:shadow-none"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        
+                        {activeMenuId === msg.id && (
+                          <div className={`absolute bottom-full ${isMe ? 'left-0' : 'right-0'} mb-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl py-1 z-50 min-w-[120px] animate-fade-in`} onClick={e => e.stopPropagation()}>
+                            {isMe && msg.type === 'text' && (
+                              <button 
+                                type="button"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingMsgId(msg.id); setEditValue(msg.text || ""); setActiveMenuId(null); }}
+                                className="w-full text-right flex items-center justify-between px-4 py-2.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-semibold"
+                              >
+                                <span>تعديل</span> <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {(isMe || user.role === 'professor' || user.role === 'admin') && (
+                              <button 
+                                type="button"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(msg.id); setActiveMenuId(null); }}
+                                className="w-full text-right flex items-center justify-between px-4 py-2.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-semibold"
+                              >
+                                <span>حذف</span> <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {editingMsgId === msg.id ? (
+                    <div className="flex flex-col gap-2 min-w-[180px]" onClick={e => e.stopPropagation()}>
+                      <textarea 
+                        value={editValue || ""}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="bg-white/20 text-white placeholder-white/50 border border-white/30 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 resize-none w-full"
+                        rows={2}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                         <button type="button" onClick={(e) => { e.preventDefault(); setEditingMsgId(null); }} className="px-2 py-1 bg-white/10 rounded-md hover:bg-white/20 text-[10px] font-bold">إلغاء</button>
+                         <button type="button" onClick={(e) => { e.preventDefault(); handleUpdate(msg.id); }} className="px-2 py-1 bg-white text-purple-600 rounded-md hover:bg-purple-50 text-[10px] font-bold flex items-center gap-1">حفظ <CheckCircle2 className="w-3 h-3" /></button>
+                      </div>
+                    </div>
+                  ) : msg.type === 'voice' ? (
                       <AudioPlayer url={msg.url} duration={msg.duration} />
                     ) : msg.type === 'image' ? (
                       <img src={msg.url} alt="Uploaded" className="rounded-xl max-w-full h-auto max-h-40 object-cover" />
